@@ -55,7 +55,7 @@ export default function Register() {
       navigate('/');
     } catch (err) {
       if (!err.response) {
-        setError('Cannot reach server. Make sure the backend is running (npm start in /backend).');
+        setError('Cannot reach server. Please try again later.');
       } else {
         setError(err.response.data?.message || 'Error. Please try again.');
       }
