@@ -43,9 +43,9 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       if (!err.response) {
-        setError('Nepavyko pasiekti serverio. Patikrinkite ar backend yra paleistas (npm start).');
+        setError('Cannot reach server. Please try again later.');
       } else {
-        setError(err.response.data?.message || 'Klaida. Bandykite dar kartą.');
+        setError(err.response.data?.message || 'Error. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -65,7 +65,7 @@ export default function Login() {
           <h1 className="text-4xl font-bold text-white">
             Velo<span className="text-red-500">Go</span>
           </h1>
-          <p className="text-gray-400 mt-2">Prisijunkite prie paskyros</p>
+          <p className="text-gray-400 mt-2">Sign in to your account</p>
         </div>
 
         <div className="bg-zinc-900 rounded-2xl p-8 shadow-xl border border-zinc-800">
@@ -80,12 +80,12 @@ export default function Login() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Prisijungti su Google
+            Sign in with Google
           </button>
 
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-zinc-700" />
-            <span className="text-zinc-500 text-sm">arba</span>
+            <span className="text-zinc-500 text-sm">or</span>
             <div className="flex-1 h-px bg-zinc-700" />
           </div>
 
@@ -97,26 +97,26 @@ export default function Login() {
             )}
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1">El. paštas</label>
+              <label className="block text-sm text-gray-400 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="jusu@pastas.lt"
+                placeholder="your@email.com"
                 required
                 className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Slaptažodis</label>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
               <input
                 type="password"
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder="Jūsų slaptažodis"
+                placeholder="Your password"
                 required
                 className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition"
               />
@@ -127,14 +127,14 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Jungiamasi...' : 'Prisijungti'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
           <p className="text-center text-gray-500 text-sm mt-6">
-            Neturite paskyros?{' '}
+            Don't have an account?{' '}
             <Link to="/register" className="text-red-400 hover:text-red-300 font-medium">
-              Registruotis
+              Sign up
             </Link>
           </p>
         </div>
