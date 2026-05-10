@@ -5,7 +5,7 @@ import axios from 'axios';
 export default function Setup() {
   const navigate = useNavigate();
   const token = localStorage.getItem('velogo_token');
-  const user = JSON.parse(localStorage.getItem('velogo_user') || '{}');
+  const user = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

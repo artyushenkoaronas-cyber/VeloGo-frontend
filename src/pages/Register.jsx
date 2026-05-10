@@ -64,7 +64,10 @@ export default function Register() {
     }
   };
 
-  const handleGoogle = () => { window.location.href = 'http://localhost:5000/api/auth/google'; };
+  const handleGoogle = () => {
+    const base = import.meta.env.VITE_API_URL || (window.location.hostname !== 'localhost' ? 'https://velogo.onrender.com' : 'http://localhost:5000');
+    window.location.href = `${base}/api/auth/google`;
+  };
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center px-4 py-10">

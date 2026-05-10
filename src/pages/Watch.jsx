@@ -36,7 +36,7 @@ export default function Watch() {
   const [editSaving, setEditSaving] = useState(false);
   const token = localStorage.getItem('velogo_token');
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  const me = JSON.parse(localStorage.getItem('velogo_user') || '{}');
+  const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
 
   useEffect(() => {
     loadVideo();

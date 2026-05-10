@@ -17,7 +17,7 @@ export default function Shorts() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const containerRef = useRef(null);
   const token = localStorage.getItem('velogo_token');
-  const me = JSON.parse(localStorage.getItem('velogo_user') || '{}');
+  const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
 
   useEffect(() => {
     axios.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});

@@ -6,9 +6,8 @@ import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
-if (import.meta.env.VITE_API_URL) {
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
-}
+const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname !== 'localhost' ? 'https://velogo.onrender.com' : '');
+if (apiUrl) axios.defaults.baseURL = apiUrl;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

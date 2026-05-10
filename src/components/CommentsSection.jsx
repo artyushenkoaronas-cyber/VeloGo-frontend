@@ -21,7 +21,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
   const [pinnedId, setPinnedId] = useState(initialPinned || null);
   const inputRef = useRef(null);
   const token = localStorage.getItem('velogo_token');
-  const me = JSON.parse(localStorage.getItem('velogo_user') || '{}');
+  const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
   const headers = { Authorization: `Bearer ${token}` };
   const isOwner = me.id === uploaderId;
 
