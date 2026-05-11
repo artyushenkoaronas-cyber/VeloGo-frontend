@@ -157,7 +157,11 @@ export default function Channel() {
               </div>
               <div className="flex gap-3 items-center">
                 <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
-                <p className="text-gray-300 text-sm">{videos.length} videos</p>
+                <p className="text-gray-300 text-sm">{videos.length + shorts.length} videos</p>
+              </div>
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                <p className="text-gray-300 text-sm">{fv([...videos, ...shorts].reduce((s, v) => s + (v.views || 0), 0))} views</p>
               </div>
             </div>
           </div>
