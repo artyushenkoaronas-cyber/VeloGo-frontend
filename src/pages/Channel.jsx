@@ -30,6 +30,7 @@ export default function Channel() {
   const [shorts, setShorts] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [editPlaylist, setEditPlaylist] = useState(null); // { _id, title, visibility }
+  const [infoOpen, setInfoOpen] = useState(false);
   const [cropFile, setCropFile] = useState(null);
   const [bgCropFile, setBgCropFile] = useState(null);
   const avatarRef = useRef(null);
@@ -50,7 +51,7 @@ export default function Channel() {
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
-          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, avatar: r.data.avatar || user.avatar };
+          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, avatar: r.data.avatar || user.avatar, createdAt: r.data.createdAt || user.createdAt, bio: r.data.bio || user.bio };
           setUser(updated);
           localStorage.setItem('velogo_user', JSON.stringify(updated));
         }).catch(() => {});
@@ -124,6 +125,41 @@ export default function Channel() {
     <div className="min-h-screen bg-[#0f0f0f]">
       {cropFile && <AvatarCropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
       {bgCropFile && <BgCropModal file={bgCropFile} onSave={handleBgCropSave} onClose={() => setBgCropFile(null)} />}
+      {infoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setInfoOpen(false)}>
+          <div className="bg-[#212121] rounded-2xl p-6 w-80 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-white font-semibold text-lg">{user.name}</h2>
+              <button onClick={() => setInfoOpen(false)} className="text-gray-400 hover:text-white transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <p className="text-gray-300 text-sm font-medium mb-4">More info</p>
+            <div className="space-y-3">
+              {user.bio && (
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                  <p className="text-gray-300 text-sm">{user.bio}</p>
+                </div>
+              )}
+              {user.createdAt && (
+                <div className="flex gap-3 items-center">
+                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  <p className="text-gray-300 text-sm">Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+              )}
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
+                <p className="text-gray-300 text-sm">{fv(user.subscribers || 0)} subscribers</p>
+              </div>
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                <p className="text-gray-300 text-sm">{videos.length} videos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Navbar onMenuToggle={() => setSidebarOpen(p => !p)} />
       <Sidebar open={sidebarOpen} />
@@ -190,7 +226,14 @@ export default function Channel() {
                     {user.isVerified && <VerifiedBadge size={22} />}
                   </div>
                   <p className="text-gray-400 text-sm">@{user.username || 'yourhandle'} · {fv(user.subscribers || 0)} subscribers · {videos.length} videos</p>
-                  {user.bio && <p className="text-gray-400 text-sm mt-1">{user.bio}</p>}
+                  {user.bio ? (
+                    <div className="mt-1">
+                      <p className="text-gray-400 text-sm line-clamp-2">{user.bio}</p>
+                      <button onClick={() => setInfoOpen(true)} className="text-gray-300 text-xs font-medium mt-0.5 hover:text-white transition">...more</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setInfoOpen(true)} className="text-gray-400 text-xs mt-1 hover:text-white transition">More about this channel</button>
+                  )}
                 </>
               )}
             </div>
