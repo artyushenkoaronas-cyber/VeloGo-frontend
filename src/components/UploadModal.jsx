@@ -9,6 +9,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const [thumb, setThumb] = useState(null);
   const [thumbPreview, setThumbPreview] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [videoDuration, setVideoDuration] = useState(null);
   const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, sound: '' });
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -19,13 +20,25 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const thumbRef = useRef(null);
   const token = localStorage.getItem('velogo_token');
 
+  const loadFileWithDuration = (f) => {
+    const url = URL.createObjectURL(f);
+    setFile(f);
+    setPreview(url);
+    setForm(p => ({ ...p, title: f.name.replace(/\.[^/.]+$/, '') }));
+    const vid = document.createElement('video');
+    vid.preload = 'metadata';
+    vid.src = url;
+    vid.onloadedmetadata = () => {
+      setVideoDuration(vid.duration);
+      setStep('details');
+    };
+    vid.onerror = () => setStep('details');
+  };
+
   const handleFile = (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
-    setForm(p => ({ ...p, title: f.name.replace(/\.[^/.]+$/, '') }));
-    setStep('details');
+    loadFileWithDuration(f);
   };
 
   const handleThumb = (e) => {
@@ -39,14 +52,21 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     e.preventDefault();
     const f = e.dataTransfer.files[0];
     if (f && f.type.startsWith('video/')) {
-      setFile(f);
-      setPreview(URL.createObjectURL(f));
-      setForm(p => ({ ...p, title: f.name.replace(/\.[^/.]+$/, '') }));
-      setStep('details');
+      loadFileWithDuration(f);
     }
   };
 
   const handleUpload = async () => {
+    if (form.isShort && videoDuration !== null) {
+      if (videoDuration < 3) {
+        setError('Shorts must be at least 3 seconds long.');
+        return;
+      }
+      if (videoDuration > 30) {
+        setError('Shorts cannot be longer than 30 seconds.');
+        return;
+      }
+    }
     setStep('uploading');
     setError('');
     const fd = new FormData();
@@ -157,7 +177,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
               <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-4 py-3 border border-zinc-700">
                 <div>
                   <p className="text-white text-sm font-medium">Upload as Short</p>
-                  <p className="text-gray-500 text-xs">Vertical video, appears in Shorts feed</p>
+                  <p className="text-gray-500 text-xs">Vertical video, 3–30 seconds, appears in Shorts feed</p>
                 </div>
                 <button
                   type="button"
@@ -167,6 +187,13 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isShort ? 'translate-x-5' : ''}`} />
                 </button>
               </div>
+              {form.isShort && videoDuration !== null && (videoDuration < 3 || videoDuration > 30) && (
+                <p className="text-red-400 text-xs px-1">
+                  {videoDuration < 3
+                    ? `Video is too short (${videoDuration.toFixed(1)}s). Shorts must be at least 3 seconds.`
+                    : `Video is too long (${Math.round(videoDuration)}s). Shorts cannot exceed 30 seconds.`}
+                </p>
+              )}
               {form.isShort && (
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Sound / Song name</label>

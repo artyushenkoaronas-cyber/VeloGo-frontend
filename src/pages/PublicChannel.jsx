@@ -198,7 +198,7 @@ export default function PublicChannel() {
                   <button onClick={() => setInfoOpen(true)} className="text-gray-300 text-xs font-medium mt-0.5 hover:text-white transition">...more</button>
                 </div>
               ) : (
-                <button onClick={() => setInfoOpen(true)} className="text-gray-400 text-xs mt-1 hover:text-white transition">More about this channel ...more</button>
+                <button onClick={() => setInfoOpen(true)} className="text-gray-400 text-xs mt-1 hover:text-white transition">More about this channel</button>
               )}
             </div>
           </div>

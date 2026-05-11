@@ -21,13 +21,15 @@ function fv(n) {
 export default function Channel() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('Videos');
+  const [activeTab, setActiveTab] = useState('Home');
   const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [shorts, setShorts] = useState([]);
   const [playlists, setPlaylists] = useState([]);
+  const [editPlaylist, setEditPlaylist] = useState(null); // { _id, title, visibility }
   const [cropFile, setCropFile] = useState(null);
   const [bgCropFile, setBgCropFile] = useState(null);
   const avatarRef = useRef(null);
@@ -39,7 +41,11 @@ export default function Channel() {
   useEffect(() => {
     if (!user.id) { navigate('/login'); return; }
     if (user.id) {
-      api.get(`/api/videos/user/${user.id}`).then(r => setVideos(r.data)).catch(() => {});
+      api.get(`/api/videos/user/${user.id}`).then(r => {
+        const all = r.data;
+        setVideos(all.filter(v => !v.isShort));
+        setShorts(all.filter(v => v.isShort));
+      }).catch(() => {});
       api.get('/api/playlists/mine', { headers }).then(r => setPlaylists(r.data)).catch(() => {});
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
@@ -230,13 +236,116 @@ export default function Channel() {
             ))}
           </div>
 
+          {/* Edit Playlist Modal */}
+          {editPlaylist && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+              <div className="bg-zinc-900 rounded-2xl p-6 w-80 space-y-4">
+                <h2 className="text-white text-lg font-semibold">Edit playlist</h2>
+                <input
+                  value={editPlaylist.title}
+                  onChange={e => setEditPlaylist(p => ({ ...p, title: e.target.value }))}
+                  className="w-full bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+                  placeholder="Playlist title"
+                />
+                <select
+                  value={editPlaylist.visibility}
+                  onChange={e => setEditPlaylist(p => ({ ...p, visibility: e.target.value }))}
+                  className="w-full bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none"
+                >
+                  <option value="public">Public</option>
+                  <option value="unlisted">Unlisted</option>
+                  <option value="private">Private</option>
+                </select>
+                <div className="flex gap-3 justify-end">
+                  <button onClick={() => setEditPlaylist(null)} className="text-gray-400 hover:text-white text-sm px-4 py-2">Cancel</button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await api.put(`/api/playlists/${editPlaylist._id}`, { title: editPlaylist.title, visibility: editPlaylist.visibility }, { headers });
+                        setPlaylists(prev => prev.map(p => p._id === editPlaylist._id ? { ...p, title: editPlaylist.title, visibility: editPlaylist.visibility } : p));
+                        setEditPlaylist(null);
+                      } catch { alert('Failed to save'); }
+                    }}
+                    className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200"
+                  >Save</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Content */}
+          {activeTab === 'Home' && (
+            <div className="pb-10 space-y-10">
+              {/* Shorts row */}
+              {shorts.length > 0 && (
+                <section>
+                  <h2 className="text-white text-lg font-semibold mb-4">Shorts</h2>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {shorts.map(v => (
+                      <div key={v._id} className="relative flex-shrink-0 w-36 group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
+                        <div className="w-36 h-64 bg-zinc-800 rounded-xl overflow-hidden">
+                          {v.thumbnail
+                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
+                            : <div className="w-full h-full bg-zinc-700" />}
+                        </div>
+                        <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{v.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {/* Videos row */}
+              {videos.length > 0 && (
+                <section>
+                  <h2 className="text-white text-lg font-semibold mb-4">Videos</h2>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {videos.map(v => (
+                      <div key={v._id} className="flex-shrink-0 w-56 relative group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
+                        <div className="w-56 aspect-video bg-zinc-800 rounded-xl overflow-hidden">
+                          {v.thumbnail
+                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
+                            : <div className="w-full h-full bg-zinc-700" />}
+                        </div>
+                        <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{v.title}</p>
+                        <p className="text-gray-500 text-xs">{v.views?.toLocaleString()} views</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {/* Playlists row */}
+              {playlists.length > 0 && (
+                <section>
+                  <h2 className="text-white text-lg font-semibold mb-4">Playlists</h2>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {playlists.map(pl => (
+                      <div key={pl._id} className="flex-shrink-0 w-48 cursor-pointer group/card" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
+                        <div className="w-48 aspect-video bg-zinc-800 rounded-xl overflow-hidden">
+                          {pl.videos?.[0]?.thumbnail
+                            ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
+                            : <div className="w-full h-full bg-zinc-700 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
+                                </svg>
+                              </div>}
+                        </div>
+                        <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{pl.title}</p>
+                        <p className="text-gray-500 text-xs">{pl.videos?.length || 0} videos</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {videos.length === 0 && shorts.length === 0 && playlists.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <p className="text-gray-500 text-sm">Nothing here yet. Upload a video or create a playlist.</p>
+                </div>
+              )}
+            </div>
+          )}
           {activeTab === 'Videos' && (
             videos.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <svg className="w-16 h-16 text-zinc-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                </svg>
                 <p className="text-white font-medium mb-1">No videos yet</p>
                 <p className="text-gray-500 text-sm">Your uploaded videos will appear here.</p>
               </div>
@@ -266,6 +375,27 @@ export default function Channel() {
               </div>
             )
           )}
+          {activeTab === 'Shorts' && (
+            shorts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-white font-medium mb-1">No Shorts yet</p>
+                <p className="text-gray-500 text-sm">Your uploaded Shorts will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pb-10">
+                {shorts.map(v => (
+                  <div key={v._id} className="relative group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
+                    <div className="w-full aspect-[9/16] bg-zinc-800 rounded-xl overflow-hidden">
+                      {v.thumbnail
+                        ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
+                        : <div className="w-full h-full bg-zinc-700" />}
+                    </div>
+                    <p className="text-white text-xs font-medium mt-1 line-clamp-2">{v.title}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
           {activeTab === 'Playlists' && (
             playlists.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -275,29 +405,48 @@ export default function Channel() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
                 {playlists.map(pl => (
-                  <div key={pl._id} className="cursor-pointer group" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
-                    <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
-                      {pl.videos?.[0]?.thumbnail
-                        ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition" />
-                        : <div className="w-full h-full flex items-center justify-center">
-                            <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
-                            </svg>
-                          </div>}
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
-                        {pl.videos?.length || 0} videos
+                  <div key={pl._id} className="group/pl relative">
+                    <div className="cursor-pointer" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
+                      <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
+                        {pl.videos?.[0]?.thumbnail
+                          ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/pl:scale-105 transition" />
+                          : <div className="w-full h-full flex items-center justify-center">
+                              <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
+                              </svg>
+                            </div>}
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                          {pl.videos?.length || 0} videos
+                        </div>
                       </div>
+                      <h3 className="text-white text-sm font-medium line-clamp-2">{pl.title}</h3>
+                      <p className="text-gray-400 text-xs capitalize">{pl.visibility}</p>
                     </div>
-                    <h3 className="text-white text-sm font-medium line-clamp-2">{pl.title}</h3>
-                    <p className="text-gray-400 text-xs capitalize">{pl.visibility}</p>
+                    {/* Edit/Delete buttons */}
+                    <div className="flex gap-1 mt-2">
+                      <button
+                        onClick={() => setEditPlaylist({ _id: pl._id, title: pl.title, visibility: pl.visibility })}
+                        className="flex-1 text-xs text-gray-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-lg py-1 transition"
+                      >Edit</button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Delete this playlist?')) return;
+                          try {
+                            await api.delete(`/api/playlists/${pl._id}`, { headers });
+                            setPlaylists(prev => prev.filter(p => p._id !== pl._id));
+                          } catch { alert('Failed to delete'); }
+                        }}
+                        className="flex-1 text-xs text-gray-400 hover:text-red-400 bg-zinc-800 hover:bg-zinc-900 rounded-lg py-1 transition"
+                      >Delete</button>
+                    </div>
                   </div>
                 ))}
               </div>
             )
           )}
-          {activeTab !== 'Videos' && activeTab !== 'Playlists' && (
+          {activeTab === 'Posts' && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-gray-500 text-sm">{activeTab} coming soon.</p>
+              <p className="text-gray-500 text-sm">Posts coming soon.</p>
             </div>
           )}
         </div>

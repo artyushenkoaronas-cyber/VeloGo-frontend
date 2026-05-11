@@ -7,16 +7,23 @@ export default function OfficialArtistBadge({ size = 16 }) {
       fill="none"
       style={{ display: 'inline', flexShrink: 0 }}
     >
-      <circle cx="12" cy="12" r="12" fill="#9333EA" />
+      <circle cx="12" cy="12" r="12" fill="#BF5AF2" />
+      {/* music note */}
       <path
-        d="M9 17V8l9-2v9"
+        d="M15 7.5v7"
         stroke="white"
-        strokeWidth="1.8"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15 7.5L10 9v6"
+        stroke="white"
+        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="7" cy="17" r="2" fill="white" />
-      <circle cx="16" cy="15" r="2" fill="white" />
+      <circle cx="10" cy="15" r="1.7" fill="white" />
+      <circle cx="15" cy="14.5" r="1.7" fill="white" />
     </svg>
   );
 }

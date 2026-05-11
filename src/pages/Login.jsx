@@ -23,23 +23,34 @@ export default function Login() {
     setLoading(true);
     try {
       const { data } = await api.post('/api/auth/login', form);
-      localStorage.setItem('velogo_token', data.token);
-      // Fetch fresh profile data (includes latest username, avatar, subscribers)
+      let newUser;
       try {
         const me = await api.get('/api/auth/me', { headers: { Authorization: `Bearer ${data.token}` } });
-        localStorage.setItem('velogo_user', JSON.stringify({
+        newUser = {
           id: me.data._id,
           name: me.data.name,
           username: me.data.username,
           email: me.data.email,
           avatar: me.data.avatar,
           isVerified: me.data.isVerified,
+          isOfficialArtist: me.data.isOfficialArtist,
           isAdmin: me.data.isAdmin,
           subscribers: me.data.subscribers
-        }));
+        };
       } catch {
-        localStorage.setItem('velogo_user', JSON.stringify(data.user));
+        newUser = data.user;
       }
+      // Multi-account: move current session to saved accounts list
+      const currentToken = localStorage.getItem('velogo_token');
+      const currentUser = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || 'null'); } catch { return null; } })();
+      if (currentToken && currentUser?.id && currentUser.id !== newUser?.id) {
+        const saved = (() => { try { return JSON.parse(localStorage.getItem('velogo_saved_accounts') || '[]'); } catch { return []; } })();
+        const alreadyIn = saved.some(a => a.user?.id === currentUser.id);
+        if (!alreadyIn) saved.push({ token: currentToken, user: currentUser });
+        localStorage.setItem('velogo_saved_accounts', JSON.stringify(saved));
+      }
+      localStorage.setItem('velogo_token', data.token);
+      localStorage.setItem('velogo_user', JSON.stringify(newUser));
       navigate('/');
     } catch (err) {
       if (!err.response) {

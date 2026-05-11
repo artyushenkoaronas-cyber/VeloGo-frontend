@@ -104,6 +104,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
   const handleLogout = () => {
     localStorage.removeItem('velogo_token');
     localStorage.removeItem('velogo_user');
+    localStorage.removeItem('velogo_saved_accounts');
     navigate('/login');
   };
 
@@ -317,46 +318,101 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
 
   const go = (path) => { onClose(); navigate(path); };
 
-  if (panel === 'switch') return (
-    <div className="absolute right-0 top-11 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl w-80 z-50 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-700">
-        <button onClick={() => setPanel('main')} className="text-white hover:text-gray-300 transition">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-        </button>
-        <p className="text-white font-medium text-sm">{t('accounts')}</p>
-      </div>
+  if (panel === 'switch') {
+    const savedAccounts = (() => { try { return JSON.parse(localStorage.getItem('velogo_saved_accounts') || '[]'); } catch { return []; } })();
 
-      <div className="py-2 border-b border-zinc-700">
-        <div className="flex items-center gap-3 px-4 py-3 bg-zinc-800/50 rounded-xl mx-2">
-          <div className="w-10 h-10 rounded-full bg-red-600 flex-shrink-0 overflow-hidden flex items-center justify-center">
-            {avatarSrc ? <img src={avatarSrc} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-sm">{initial}</span>}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-              {user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-              {user?.isVerified && <VerifiedBadge size={13} />}
+    const switchToAccount = (acc) => {
+      // Save current account back into saved list
+      const currentToken = localStorage.getItem('velogo_token');
+      const currentUser = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || 'null'); } catch { return null; } })();
+      const updated = savedAccounts.filter(a => a.user?.id !== acc.user?.id);
+      if (currentToken && currentUser?.id) updated.push({ token: currentToken, user: currentUser });
+      localStorage.setItem('velogo_saved_accounts', JSON.stringify(updated));
+      localStorage.setItem('velogo_token', acc.token);
+      localStorage.setItem('velogo_user', JSON.stringify(acc.user));
+      onClose();
+      window.location.href = '/';
+    };
+
+    const addAccount = () => {
+      // Save current session to saved accounts, then go to login
+      const currentToken = localStorage.getItem('velogo_token');
+      const currentUser = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || 'null'); } catch { return null; } })();
+      if (currentToken && currentUser?.id) {
+        const already = savedAccounts.some(a => a.user?.id === currentUser.id);
+        if (!already) {
+          savedAccounts.push({ token: currentToken, user: currentUser });
+          localStorage.setItem('velogo_saved_accounts', JSON.stringify(savedAccounts));
+        }
+      }
+      onClose();
+      navigate('/login');
+    };
+
+    return (
+      <div className="absolute right-0 top-11 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl w-80 z-50 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-700">
+          <button onClick={() => setPanel('main')} className="text-white hover:text-gray-300 transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <p className="text-white font-medium text-sm">{t('accounts')}</p>
+        </div>
+
+        <div className="py-2 border-b border-zinc-700">
+          {/* Active account */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-zinc-800/50 rounded-xl mx-2">
+            <div className="w-10 h-10 rounded-full bg-red-600 flex-shrink-0 overflow-hidden flex items-center justify-center">
+              {avatarSrc ? <img src={avatarSrc} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-sm">{initial}</span>}
             </div>
-            <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <p className="text-white text-sm font-medium truncate">{user?.name}</p>
+                {user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
+                {user?.isVerified && <VerifiedBadge size={13} />}
+              </div>
+              <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+            </div>
+            <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+
+          {/* Saved accounts */}
+          {savedAccounts.map((acc, i) => {
+            const src = acc.user?.avatar ? (acc.user.avatar.startsWith('http') ? acc.user.avatar : null) : null;
+            const init = acc.user?.name?.[0]?.toUpperCase() || '?';
+            return (
+              <button key={i} onClick={() => switchToAccount(acc)}
+                className="flex items-center gap-3 w-full px-4 py-3 hover:bg-zinc-800 transition rounded-xl mx-0">
+                <div className="w-10 h-10 rounded-full bg-red-600 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  {src ? <img src={src} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-sm">{init}</span>}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-1">
+                    <p className="text-white text-sm font-medium truncate">{acc.user?.name}</p>
+                    {acc.user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
+                    {acc.user?.isVerified && <VerifiedBadge size={13} />}
+                  </div>
+                  <p className="text-gray-400 text-xs truncate">{acc.user?.email}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="py-2">
+          <button onClick={addAccount}
+            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white hover:bg-zinc-800 transition">
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            {t('addAccount')}
+          </button>
+          <button onClick={onLogout}
+            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white hover:bg-zinc-800 transition">
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            {t('signOut')}
+          </button>
         </div>
       </div>
-
-      <div className="py-2">
-        <button onClick={() => { onLogout(); setTimeout(() => navigate('/login'), 100); }}
-          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white hover:bg-zinc-800 transition">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-          {t('addAccount')}
-        </button>
-        <button onClick={onLogout}
-          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white hover:bg-zinc-800 transition">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          {t('signOut')}
-        </button>
-      </div>
-    </div>
-  );
+    );
+  }
 
   if (panel === 'language') return (
     <div className="absolute right-0 top-11 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl w-72 z-50 overflow-hidden">
