@@ -328,9 +328,7 @@ export default function Watch() {
               <div className="overflow-y-auto max-h-[calc(100vh-180px)] divide-y divide-zinc-800">
                 {(playlist.videos || []).map((v, idx) => {
                   const isActive = v._id === id;
-                  const t = v.thumbnail
-                    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
-                    : null;
+                  const t = v.thumbnail ? mediaUrl(v.thumbnail) : null;
                   return (
                     <div key={v._id} onClick={() => navigate(`/watch/${v._id}?list=${listId}`)}
                       className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition ${isActive ? 'bg-zinc-700' : 'hover:bg-zinc-800'}`}>

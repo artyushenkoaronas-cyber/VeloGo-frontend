@@ -298,9 +298,7 @@ function PlaylistRow({ playlist, navigate }) {
   const videos = playlist.videos || [];
   if (videos.length === 0) return null;
 
-  const thumb = (v) => v.thumbnail
-    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
-    : null;
+  const thumb = (v) => v.thumbnail ? mediaUrl(v.thumbnail) : null;
 
   const playAll = () => navigate(`/watch/${videos[0]._id}?list=${playlist._id}`);
   const scroll = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: 'smooth' });
@@ -360,9 +358,7 @@ function PlaylistRow({ playlist, navigate }) {
 
 function HorizontalVideoRow({ videos, navigate }) {
   const scrollRef = useRef(null);
-  const thumb = (v) => v.thumbnail
-    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
-    : null;
+  const thumb = (v) => v.thumbnail ? mediaUrl(v.thumbnail) : null;
   const scroll = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: 'smooth' });
 
   return (
