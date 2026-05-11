@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
@@ -29,6 +29,7 @@ export default function PublicChannel() {
   const [subscribed, setSubscribed] = useState(false);
   const [subCount, setSubCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
+  const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -65,6 +66,11 @@ export default function PublicChannel() {
         const videoList = vids.data || [];
         setVideos(videoList);
         setTotalViews(videoList.reduce((sum, v) => sum + (v.views || 0), 0));
+      } catch {}
+
+      try {
+        const pls = await axios.get(`/api/playlists/user/${data._id}`);
+        setPlaylists(pls.data || []);
       } catch {}
 
     } catch {
@@ -187,25 +193,90 @@ export default function PublicChannel() {
             ))}
           </div>
 
-          {/* Videos grid */}
+          {/* HOME tab */}
+          {activeTab === 'Home' && (
+            <div className="pb-8 space-y-10">
+              {playlists.length === 0 && videos.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-20">No content yet.</p>
+              )}
+              {playlists.map(pl => (
+                <PlaylistRow key={pl._id} playlist={pl} navigate={navigate} />
+              ))}
+              {videos.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-white font-semibold text-base">Videos</h2>
+                  </div>
+                  <HorizontalVideoRow videos={videos.filter(v => !v.isShort)} navigate={navigate} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIDEOS tab */}
           {activeTab === 'Videos' && (
-            videos.length === 0 ? (
+            videos.filter(v => !v.isShort).length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <svg className="w-16 h-16 text-zinc-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                </svg>
                 <p className="text-white font-medium">No videos yet</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
-                {videos.map(v => <VideoCard key={v._id} video={v} />)}
+                {videos.filter(v => !v.isShort).map(v => <VideoCard key={v._id} video={v} />)}
               </div>
             )
           )}
 
-          {(activeTab !== 'Videos') && (
+          {/* SHORTS tab */}
+          {activeTab === 'Shorts' && (
+            videos.filter(v => v.isShort).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-white font-medium">No shorts yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
+                {videos.filter(v => v.isShort).map(v => <VideoCard key={v._id} video={v} />)}
+              </div>
+            )
+          )}
+
+          {/* PLAYLISTS tab */}
+          {activeTab === 'Playlists' && (
+            playlists.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-white font-medium">No playlists yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
+                {playlists.map(pl => (
+                  <div key={pl._id} className="cursor-pointer group" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
+                    <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
+                      {pl.videos?.[0]?.thumbnail
+                        ? <img src={`http://localhost:5000${pl.videos[0].thumbnail}`} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        : <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
+                            </svg>
+                          </div>}
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                        {pl.videos?.length || 0} videos
+                      </div>
+                    </div>
+                    <h3 className="text-white text-sm font-medium line-clamp-2">{pl.title}</h3>
+                    <p className="text-gray-400 text-xs capitalize">{pl.visibility} playlist</p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {activeTab === 'Posts' && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-gray-500 text-sm">{activeTab} coming soon.</p>
+              <p className="text-gray-500 text-sm">Posts coming soon.</p>
             </div>
           )}
 
@@ -217,6 +288,111 @@ export default function PublicChannel() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function PlaylistRow({ playlist, navigate }) {
+  const scrollRef = useRef(null);
+  const videos = playlist.videos || [];
+  if (videos.length === 0) return null;
+
+  const thumb = (v) => v.thumbnail
+    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+    : null;
+
+  const playAll = () => navigate(`/watch/${videos[0]._id}?list=${playlist._id}`);
+  const scroll = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: 'smooth' });
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+          {videos[0]?.thumbnail
+            ? <img src={thumb(videos[0])} className="w-full h-full object-cover" />
+            : <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10" />
+              </svg>}
+        </div>
+        <h2 className="text-white font-semibold text-base flex-1">{playlist.title}</h2>
+        <button onClick={playAll} className="flex items-center gap-1.5 text-white text-sm hover:text-gray-300 transition">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+          Play all
+        </button>
+      </div>
+      <div className="relative group/row">
+        <button onClick={() => scroll(-1)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition -translate-x-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+          {videos.map((v, idx) => {
+            const t = thumb(v);
+            return (
+              <div key={v._id} className="flex-shrink-0 w-48 cursor-pointer group"
+                onClick={() => navigate(`/watch/${v._id}?list=${playlist._id}`)}>
+                <div className="relative w-48 h-28 bg-zinc-800 rounded-xl overflow-hidden mb-2">
+                  {t ? <img src={t} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                    : <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13" />
+                        </svg>
+                      </div>}
+                  <div className="absolute bottom-1 right-1 text-[10px] bg-black/70 text-white px-1.5 py-0.5 rounded">
+                    {idx + 1} / {videos.length}
+                  </div>
+                </div>
+                <p className="text-white text-xs font-medium line-clamp-2">{v.title}</p>
+                <p className="text-gray-500 text-[11px]">{fv(v.views || 0)} views</p>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={() => scroll(1)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition translate-x-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HorizontalVideoRow({ videos, navigate }) {
+  const scrollRef = useRef(null);
+  const thumb = (v) => v.thumbnail
+    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+    : null;
+  const scroll = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: 'smooth' });
+
+  return (
+    <div className="relative group/row">
+      <button onClick={() => scroll(-1)}
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition -translate-x-2">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      </button>
+      <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+        {videos.map(v => {
+          const t = thumb(v);
+          return (
+            <div key={v._id} className="flex-shrink-0 w-48 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
+              <div className="w-48 h-28 bg-zinc-800 rounded-xl overflow-hidden mb-2">
+                {t ? <img src={t} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  : <div className="w-full h-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                      </svg>
+                    </div>}
+              </div>
+              <p className="text-white text-xs font-medium line-clamp-2">{v.title}</p>
+              <p className="text-gray-500 text-[11px]">{fv(v.views || 0)} views</p>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={() => scroll(1)}
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition translate-x-2">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+      </button>
     </div>
   );
 }

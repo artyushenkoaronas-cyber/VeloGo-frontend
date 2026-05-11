@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -25,6 +25,9 @@ function fv(n) {
 export default function Watch() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const listId = searchParams.get('list');
+  const [playlist, setPlaylist] = useState(null);
   const [video, setVideo] = useState(null);
   const [recommended, setRecommended] = useState([]);
   const [liked, setLiked] = useState(false);
@@ -44,12 +47,13 @@ export default function Watch() {
   useEffect(() => {
     loadVideo();
     loadRecommended();
+    if (listId) axios.get(`/api/playlists/${listId}`).then(r => setPlaylist(r.data)).catch(() => {});
     const viewed = sessionStorage.getItem(`viewed_${id}`);
     if (!viewed) {
       axios.post(`/api/videos/${id}/view`).catch(() => {});
       sessionStorage.setItem(`viewed_${id}`, '1');
     }
-  }, [id]);
+  }, [id, listId]);
 
   const loadVideo = async () => {
     try {
@@ -310,11 +314,48 @@ export default function Watch() {
           />
         </div>
 
-        {/* Recommended sidebar */}
+        {/* Playlist panel OR Recommended sidebar */}
         <aside className="w-96 flex-shrink-0 hidden lg:block">
-          <div className="space-y-3">
-            {recommended.map(v => <RecommendedCard key={v._id} video={v} />)}
-          </div>
+          {playlist ? (
+            <div className="bg-zinc-900 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-zinc-800">
+                <p className="text-white font-semibold text-sm truncate">{playlist.title}</p>
+                <p className="text-gray-400 text-xs mt-0.5">
+                  {playlist.owner?.name} · {playlist.videos?.length || 0} videos
+                </p>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(100vh-180px)] divide-y divide-zinc-800">
+                {(playlist.videos || []).map((v, idx) => {
+                  const isActive = v._id === id;
+                  const t = v.thumbnail
+                    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+                    : null;
+                  return (
+                    <div key={v._id} onClick={() => navigate(`/watch/${v._id}?list=${listId}`)}
+                      className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition ${isActive ? 'bg-zinc-700' : 'hover:bg-zinc-800'}`}>
+                      <span className="text-gray-500 text-xs w-4 text-center flex-shrink-0">{isActive ? '▶' : idx + 1}</span>
+                      <div className="w-24 h-14 bg-zinc-800 rounded-lg overflow-hidden flex-shrink-0">
+                        {t ? <img src={t} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center">
+                              <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                              </svg>
+                            </div>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium line-clamp-2 ${isActive ? 'text-white' : 'text-gray-300'}`}>{v.title}</p>
+                        <p className="text-gray-500 text-[11px] mt-0.5">{v.uploader?.name}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recommended.map(v => <RecommendedCard key={v._id} video={v} />)}
+            </div>
+          )}
         </aside>
       </div>
     </div>
