@@ -128,7 +128,11 @@ function ShortItem({ short, isActive, token, me, navigate }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
+  const [showCollab, setShowCollab] = useState(false);
+  const [collabInput, setCollabInput] = useState('');
+  const [collabMsg, setCollabMsg] = useState('');
   const headers = { Authorization: `Bearer ${token}` };
+  const isOwner = me.id && short.uploader?._id && me.id === short.uploader._id;
 
   const uploaderAvatar = short.uploader?.avatar
     ? mediaUrl(short.uploader.avatar)
@@ -217,14 +221,29 @@ function ShortItem({ short, isActive, token, me, navigate }) {
                 : <span className="text-white text-xs font-bold">{short.uploader?.name?.[0]?.toUpperCase()}</span>}
             </div>
           </button>
-          <button
-            onClick={() => navigate(short.uploader?.username ? `/@${short.uploader.username}` : `/@${short.uploader?._id}`)}
-            className="flex items-center gap-1 hover:opacity-80 transition"
-          >
-            <span className="text-white text-sm font-semibold">@{short.uploader?.username || short.uploader?.name}</span>
-            {short.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-            {short.uploader?.isVerified && <VerifiedBadge size={13} />}
-          </button>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              onClick={() => navigate(short.uploader?.username ? `/@${short.uploader.username}` : `/@${short.uploader?._id}`)}
+              className="flex items-center gap-1 hover:opacity-80 transition"
+            >
+              <span className="text-white text-sm font-semibold">@{short.uploader?.username || short.uploader?.name}</span>
+              {short.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
+              {short.uploader?.isVerified && <VerifiedBadge size={13} />}
+            </button>
+            {short.collaborators?.length > 0 && (
+              <>
+                <span className="text-gray-300 text-xs">and</span>
+                {short.collaborators.map((c, i) => (
+                  <span key={c._id} className="flex items-center gap-0.5">
+                    <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
+                    {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
+                    {c.isVerified && <VerifiedBadge size={13} />}
+                    {i < short.collaborators.length - 1 && <span className="text-gray-300 text-xs">,</span>}
+                  </span>
+                ))}
+              </>
+            )}
+          </div>
           <button className="ml-1 border border-white text-white text-xs font-medium px-3 py-0.5 rounded-full hover:bg-white/10 transition">
             Subscribe
           </button>
@@ -301,7 +320,80 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           </div>
           <span className="text-white text-xs">{muted ? 'Unmute' : 'Mute'}</span>
         </button>
+
+        {/* Collab — owner only */}
+        {isOwner && (
+          <button onClick={() => { setShowCollab(true); setCollabMsg(''); }} className="flex flex-col items-center gap-1">
+            <div className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <span className="text-white text-xs">Collab</span>
+          </button>
+        )}
       </div>
+
+      {/* Collab drawer */}
+      {showCollab && (
+        <div className="absolute inset-0 z-20 flex items-end justify-center max-w-[400px] mx-auto">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCollab(false)} />
+          <div className="relative bg-zinc-900 rounded-t-2xl w-full p-4 space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-white font-semibold text-sm">Invite collaborator</p>
+              <button onClick={() => setShowCollab(false)} className="text-gray-400 hover:text-white transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            {short.collaborators?.length > 0 && (
+              <div className="space-y-2 pb-2 border-b border-zinc-700">
+                {short.collaborators.map(c => (
+                  <div key={c._id} className="flex items-center justify-between">
+                    <span className="text-white text-sm">@{c.username || c.name}</span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await api.delete(`/api/videos/${short._id}/collaborators/${c._id}`, { headers });
+                          short.collaborators = short.collaborators.filter(x => x._id !== c._id);
+                          setCollabMsg('Removed');
+                        } catch { setCollabMsg('Error'); }
+                      }}
+                      className="text-red-400 text-xs hover:text-red-300"
+                    >Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                value={collabInput}
+                onChange={e => setCollabInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && collabInput.trim() && (async () => {
+                  try {
+                    const { data } = await api.post(`/api/videos/${short._id}/collaborators`, { username: collabInput.trim() }, { headers });
+                    setCollabMsg(data.message);
+                    setCollabInput('');
+                  } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
+                })()}
+                placeholder="@username"
+                className="flex-1 bg-zinc-800 text-white text-sm rounded-full px-4 py-2 focus:outline-none"
+              />
+              <button
+                onClick={async () => {
+                  if (!collabInput.trim()) return;
+                  try {
+                    const { data } = await api.post(`/api/videos/${short._id}/collaborators`, { username: collabInput.trim() }, { headers });
+                    setCollabMsg(data.message);
+                    setCollabInput('');
+                  } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-full transition"
+              >Send</button>
+            </div>
+            {collabMsg && <p className="text-green-400 text-xs">{collabMsg}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Comments drawer */}
       {showComments && (
