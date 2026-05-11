@@ -55,11 +55,27 @@ export default function VideoCard({ video }) {
         </button>
         <div className="flex-1 min-w-0">
           <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug mb-1">{video.title}</h3>
-          <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition">
-            <span className="text-gray-400 text-xs">{video.uploader?.name}</span>
-            {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-            {video.uploader?.isVerified && <VerifiedBadge size={13} />}
-          </button>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition">
+              <span className="text-gray-400 text-xs">{video.uploader?.name}</span>
+              {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
+              {video.uploader?.isVerified && <VerifiedBadge size={13} />}
+            </button>
+            {video.collaborators?.length > 0 && (
+              <>
+                <span className="text-gray-500 text-xs">and</span>
+                {video.collaborators.map((c, i) => (
+                  <span key={c._id} className="flex items-center gap-0.5">
+                    <button onClick={e => { e.stopPropagation(); navigate(c.username ? `/@${c.username}` : `/@${c._id}`); }}
+                      className="text-gray-400 text-xs hover:text-white transition">{c.name}</button>
+                    {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
+                    {c.isVerified && <VerifiedBadge size={13} />}
+                    {i < video.collaborators.length - 1 && <span className="text-gray-500 text-xs">,</span>}
+                  </span>
+                ))}
+              </>
+            )}
+          </div>
           <p className="text-gray-400 text-xs">{fv(video.views)} views · {timeAgo(video.createdAt)}</p>
         </div>
       </div>
