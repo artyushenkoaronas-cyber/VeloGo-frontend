@@ -127,10 +127,10 @@ export default function PublicChannel() {
       <Sidebar open={sidebarOpen} />
 
       <main className={`pt-14 transition-all duration-200 ${sidebarOpen ? 'ml-60' : 'ml-16'}`}>
-        {/* Banner */}
-        <div className="w-full h-40 bg-gradient-to-r from-zinc-800 to-zinc-700 overflow-hidden">
-          {channel?.banner
-            ? <img src={`http://localhost:5000${channel.banner}`} className="w-full h-full object-cover" />
+        {/* Banner / Background */}
+        <div className="w-full h-40 overflow-hidden bg-zinc-800">
+          {(channel?.background || channel?.banner)
+            ? <img src={(() => { const s = channel.background || channel.banner; return s.startsWith('http') ? s : `http://localhost:5000${s}`; })()} className="w-full h-full object-cover" />
             : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
         </div>
 

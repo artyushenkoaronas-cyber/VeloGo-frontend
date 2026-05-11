@@ -33,6 +33,8 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
     try {
       const { data } = await axios.get(`/api/videos/${videoId}/comments`);
       setComments(data);
+      const pinned = data.find(c => c.isPinned);
+      if (pinned) setPinnedId(pinned._id);
     } catch {}
   };
 
@@ -78,8 +80,13 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
 
   const handlePin = async (commentId) => {
     try {
-      const { data } = await axios.put(`/api/videos/${videoId}/pin-comment`, { commentId }, { headers });
-      setPinnedId(data.pinnedComment || null);
+      const { data } = await axios.post(`/api/videos/${videoId}/comments/${commentId}/pin`, {}, { headers });
+      setComments(cs => cs.map(c => ({
+        ...c,
+        isPinned: c._id === commentId ? data.isPinned : false,
+        pinnedBy: c._id === commentId && data.isPinned ? { username: me.username, name: me.name } : null
+      })));
+      setPinnedId(data.isPinned ? commentId : null);
     } catch {}
   };
 
@@ -214,7 +221,9 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
-            <span className="text-gray-400 text-xs">Pinned by creator</span>
+            <span className="text-gray-400 text-xs">
+              Pinned by @{c.pinnedBy?.username || c.pinnedBy?.name || 'creator'}
+            </span>
           </div>
         )}
         <div className="flex items-center gap-1.5 mb-0.5">

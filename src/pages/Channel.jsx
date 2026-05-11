@@ -19,6 +19,7 @@ export default function Channel() {
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState([]);
   const avatarRef = useRef(null);
+  const bgRef = useRef(null);
 
   const token = localStorage.getItem('velogo_token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -36,6 +37,21 @@ export default function Channel() {
         }).catch(() => {});
     }
   }, [user.id]);
+
+  const handleBgChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('background', file);
+    try {
+      const { data } = await axios.post('/api/users/me/background', fd, {
+        headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+      });
+      const updated = { ...user, background: data.background };
+      setUser(updated);
+      localStorage.setItem('velogo_user', JSON.stringify(updated));
+    } catch {}
+  };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -79,9 +95,20 @@ export default function Channel() {
       <Sidebar open={sidebarOpen} />
 
       <main className={`pt-14 transition-all duration-200 ${sidebarOpen ? 'ml-60' : 'ml-16'}`}>
-        {/* Banner */}
-        <div className="w-full h-36 bg-gradient-to-r from-zinc-800 to-zinc-700 relative">
-          <div className="absolute inset-0 bg-[#1a1a2e]" />
+        {/* Banner / Background */}
+        <div className="w-full h-40 relative overflow-hidden group/banner bg-zinc-800">
+          {user.background
+            ? <img src={user.background.startsWith('http') ? user.background : `http://localhost:5000${user.background}`} className="w-full h-full object-cover" />
+            : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
+          <button onClick={() => bgRef.current.click()}
+            className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-full transition opacity-0 group-hover/banner:opacity-100">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Change background
+          </button>
+          <input ref={bgRef} type="file" accept="image/*" onChange={handleBgChange} className="hidden" />
         </div>
 
         {/* Profile section */}
