@@ -34,6 +34,7 @@ export default function PublicChannel() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const me = safeParseUser();
   const token = localStorage.getItem('velogo_token');
@@ -124,6 +125,45 @@ export default function PublicChannel() {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
+      {infoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setInfoOpen(false)}>
+          <div className="bg-[#212121] rounded-2xl p-6 w-80 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-white font-semibold text-lg">{channel?.name}</h2>
+              <button onClick={() => setInfoOpen(false)} className="text-gray-400 hover:text-white transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <p className="text-gray-300 text-sm font-medium mb-4">More info</p>
+            <div className="space-y-3">
+              {channel?.bio && (
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                  <p className="text-gray-300 text-sm">{channel.bio}</p>
+                </div>
+              )}
+              {channel?.createdAt && (
+                <div className="flex gap-3 items-center">
+                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  <p className="text-gray-300 text-sm">Joined {new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+              )}
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
+                <p className="text-gray-300 text-sm">{fv(subCount)} subscribers</p>
+              </div>
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                <p className="text-gray-300 text-sm">{videos.length} videos</p>
+              </div>
+              <div className="flex gap-3 items-center">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                <p className="text-gray-300 text-sm">{fv(totalViews)} views</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <Navbar onMenuToggle={() => setSidebarOpen(p => !p)} />
       <Sidebar open={sidebarOpen} />
 
@@ -152,18 +192,13 @@ export default function PublicChannel() {
               <p className="text-gray-400 text-sm">
                 @{channel?.username} · {fv(subCount)} subscribers · {videos.length} videos
               </p>
-              {channel?.bio && (
+              {channel?.bio ? (
                 <div className="mt-1">
-                  <p className={`text-gray-400 text-sm ${bioExpanded ? '' : 'line-clamp-2'}`}>
-                    {channel.bio}
-                  </p>
-                  <button
-                    onClick={() => setBioExpanded(p => !p)}
-                    className="text-gray-300 text-xs font-medium mt-0.5 hover:text-white transition"
-                  >
-                    {bioExpanded ? 'Show less' : '...more'}
-                  </button>
+                  <p className={`text-gray-400 text-sm ${bioExpanded ? '' : 'line-clamp-2'}`}>{channel.bio}</p>
+                  <button onClick={() => setInfoOpen(true)} className="text-gray-300 text-xs font-medium mt-0.5 hover:text-white transition">...more</button>
                 </div>
+              ) : (
+                <button onClick={() => setInfoOpen(true)} className="text-gray-400 text-xs mt-1 hover:text-white transition">More about this channel ...more</button>
               )}
             </div>
           </div>
