@@ -57,22 +57,24 @@ export default function VideoCard({ video }) {
           <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug mb-1">{video.title}</h3>
           <div className="flex items-center gap-1 flex-wrap">
             <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition">
-              <span className="text-gray-400 text-xs">{video.uploader?.name}</span>
+              <span className="text-gray-400 text-xs">@{video.uploader?.username || video.uploader?.name}</span>
               {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
               {video.uploader?.isVerified && <VerifiedBadge size={13} />}
             </button>
             {video.collaborators?.length > 0 && (
               <>
                 <span className="text-gray-500 text-xs">and</span>
-                {video.collaborators.map((c, i) => (
+                {video.collaborators.slice(0, 1).map(c => (
                   <span key={c._id} className="flex items-center gap-0.5">
                     <button onClick={e => { e.stopPropagation(); navigate(c.username ? `/@${c.username}` : `/@${c._id}`); }}
-                      className="text-gray-400 text-xs hover:text-white transition">{c.name}</button>
+                      className="text-gray-400 text-xs hover:text-white transition">@{c.username || c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
                     {c.isVerified && <VerifiedBadge size={13} />}
-                    {i < video.collaborators.length - 1 && <span className="text-gray-500 text-xs">,</span>}
                   </span>
                 ))}
+                {video.collaborators.length > 1 && (
+                  <span className="text-gray-500 text-xs">+{video.collaborators.length - 1}</span>
+                )}
               </>
             )}
           </div>

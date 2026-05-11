@@ -26,7 +26,7 @@ export default function Home() {
       if (activeCategory !== 'All') params.category = activeCategory;
       if (searchQuery) params.search = searchQuery;
       const { data } = await api.get('/api/videos', { params });
-      setVideos(data);
+      setVideos(data.filter(v => !v.isShort));
     } catch {}
     setLoading(false);
   };

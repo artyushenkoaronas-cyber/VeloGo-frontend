@@ -8,6 +8,7 @@ import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import VideoCard from '../components/VideoCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import BgCropModal from '../components/BgCropModal';
+import ShortTrimModal from '../components/ShortTrimModal';
 import api from '../utils/api';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
@@ -30,6 +31,7 @@ export default function Channel() {
   const [shorts, setShorts] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [editPlaylist, setEditPlaylist] = useState(null); // { _id, title, visibility }
+  const [trimShort, setTrimShort] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [cropFile, setCropFile] = useState(null);
   const [bgCropFile, setBgCropFile] = useState(null);
@@ -125,6 +127,7 @@ export default function Channel() {
     <div className="min-h-screen bg-[#0f0f0f]">
       {cropFile && <AvatarCropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
       {bgCropFile && <BgCropModal file={bgCropFile} onSave={handleBgCropSave} onClose={() => setBgCropFile(null)} />}
+      {trimShort && <ShortTrimModal short={trimShort} onClose={() => setTrimShort(null)} onSaved={updated => setShorts(prev => prev.map(s => s._id === updated._id ? updated : s))} />}
       {infoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setInfoOpen(false)}>
           <div className="bg-[#212121] rounded-2xl p-6 w-80 shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -434,6 +437,17 @@ export default function Channel() {
                         : <div className="w-full h-full bg-zinc-700" />}
                     </div>
                     <p className="text-white text-xs font-medium mt-1 line-clamp-2">{v.title}</p>
+                    {/* Trim button */}
+                    <button
+                      onClick={e => { e.preventDefault(); e.stopPropagation(); setTrimShort(v); }}
+                      className="absolute top-2 left-2 w-8 h-8 bg-black/70 hover:bg-zinc-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition z-10"
+                      title="Trim"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                      </svg>
+                    </button>
+                    {/* Delete button */}
                     <button
                       onClick={async (e) => {
                         e.preventDefault();

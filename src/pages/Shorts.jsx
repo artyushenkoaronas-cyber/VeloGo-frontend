@@ -138,14 +138,18 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     ? mediaUrl(short.uploader.avatar)
     : null;
 
+  const trimStart = short.trimStart || 0;
+  const trimEnd = short.trimEnd || null;
+
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     if (isActive) {
+      el.currentTime = trimStart;
       el.play().catch(() => {});
     } else {
       el.pause();
-      el.currentTime = 0;
+      el.currentTime = trimStart;
     }
   }, [isActive]);
 
@@ -154,11 +158,20 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     if (!el) return;
     const onEnded = () => {
       setLoopCount(p => p + 1);
+      el.currentTime = trimStart;
       el.play().catch(() => {});
     };
+    const onTime = () => {
+      if (trimEnd !== null && el.currentTime >= trimEnd) {
+        setLoopCount(p => p + 1);
+        el.currentTime = trimStart;
+        el.play().catch(() => {});
+      }
+    };
     el.addEventListener('ended', onEnded);
-    return () => el.removeEventListener('ended', onEnded);
-  }, []);
+    el.addEventListener('timeupdate', onTime);
+    return () => { el.removeEventListener('ended', onEnded); el.removeEventListener('timeupdate', onTime); };
+  }, [trimStart, trimEnd]);
 
   const handleLike = async () => {
     if (!token) return navigate('/login');
