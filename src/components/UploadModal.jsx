@@ -10,7 +10,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const [thumbPreview, setThumbPreview] = useState(null);
   const [preview, setPreview] = useState(null);
   const [videoDuration, setVideoDuration] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, sound: '' });
+  const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, isMusicVideo: false, sound: '' });
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [collabInput, setCollabInput] = useState('');
@@ -76,6 +76,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     fd.append('visibility', form.visibility);
     fd.append('category', form.category);
     fd.append('isShort', form.isShort ? 'true' : 'false');
+    fd.append('isMusicVideo', form.isMusicVideo ? 'true' : 'false');
     fd.append('sound', form.sound);
     if (thumb) fd.append('thumbnail', thumb);
 
@@ -174,6 +175,23 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   </select>
                 </div>
               </div>
+              {/* Music Video toggle */}
+              {!form.isShort && (
+                <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-4 py-3 border border-zinc-700">
+                  <div>
+                    <p className="text-white text-sm font-medium">Music Video</p>
+                    <p className="text-gray-500 text-xs">Shows a music note badge on the video card</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, isMusicVideo: !p.isMusicVideo }))}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${form.isMusicVideo ? 'bg-purple-600' : 'bg-zinc-600'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isMusicVideo ? 'translate-x-5' : ''}`} />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-4 py-3 border border-zinc-700">
                 <div>
                   <p className="text-white text-sm font-medium">Upload as Short</p>

@@ -44,6 +44,13 @@ export default function VideoCard({ video }) {
               </svg>
             </div>
         }
+        {video.isMusicVideo && (
+          <div className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center shadow-lg" title="Music Video">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Info */}
