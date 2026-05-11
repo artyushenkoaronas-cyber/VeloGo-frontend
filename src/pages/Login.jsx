@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,11 +22,11 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('/api/auth/login', form);
+      const { data } = await api.post('/api/auth/login', form);
       localStorage.setItem('velogo_token', data.token);
       // Fetch fresh profile data (includes latest username, avatar, subscribers)
       try {
-        const me = await axios.get('/api/auth/me', { headers: { Authorization: `Bearer ${data.token}` } });
+        const me = await api.get('/api/auth/me', { headers: { Authorization: `Bearer ${data.token}` } });
         localStorage.setItem('velogo_user', JSON.stringify({
           id: me.data._id,
           name: me.data.name,

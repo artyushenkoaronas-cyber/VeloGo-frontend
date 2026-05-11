@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
@@ -48,17 +48,17 @@ export default function Watch() {
   useEffect(() => {
     loadVideo();
     loadRecommended();
-    if (listId) axios.get(`/api/playlists/${listId}`).then(r => setPlaylist(r.data)).catch(() => {});
+    if (listId) api.get(`/api/playlists/${listId}`).then(r => setPlaylist(r.data)).catch(() => {});
     const viewed = sessionStorage.getItem(`viewed_${id}`);
     if (!viewed) {
-      axios.post(`/api/videos/${id}/view`).catch(() => {});
+      api.post(`/api/videos/${id}/view`).catch(() => {});
       sessionStorage.setItem(`viewed_${id}`, '1');
     }
   }, [id, listId]);
 
   const loadVideo = async () => {
     try {
-      const { data } = await axios.get(`/api/videos/${id}`);
+      const { data } = await api.get(`/api/videos/${id}`);
       setVideo(data);
       setLikes(data.likes.length);
       setSubCount(data.uploader?.subscribers || 0);
@@ -67,7 +67,7 @@ export default function Watch() {
       setEditForm({ title: data.title, description: data.description || '', visibility: data.visibility });
       if (me.id && token) {
         try {
-          const meRes = await axios.get('/api/auth/me', { headers });
+          const meRes = await api.get('/api/auth/me', { headers });
           setSubscribed(meRes.data.subscribedTo?.includes(data.uploader?._id));
         } catch {}
       }
@@ -76,7 +76,7 @@ export default function Watch() {
 
   const loadRecommended = async () => {
     try {
-      const { data } = await axios.get('/api/videos');
+      const { data } = await api.get('/api/videos');
       setRecommended(data.filter(v => v._id !== id).slice(0, 20));
     } catch {}
   };
@@ -84,7 +84,7 @@ export default function Watch() {
   const handleLike = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/videos/${id}/like`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${id}/like`, {}, { headers });
       setLikes(data.likes);
       setLiked(data.liked);
       if (data.liked) setDisliked(false);
@@ -94,7 +94,7 @@ export default function Watch() {
   const handleDislike = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/videos/${id}/dislike`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${id}/dislike`, {}, { headers });
       setDisliked(data.disliked);
       if (data.disliked) setLiked(false);
     } catch {}
@@ -103,7 +103,7 @@ export default function Watch() {
   const handleSubscribe = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/users/${video.uploader._id}/subscribe`, {}, { headers });
+      const { data } = await api.post(`/api/users/${video.uploader._id}/subscribe`, {}, { headers });
       setSubscribed(data.subscribed);
       setSubCount(data.subscribers);
     } catch {}
@@ -112,7 +112,7 @@ export default function Watch() {
   const handleEditSave = async () => {
     setEditSaving(true);
     try {
-      const { data } = await axios.put(`/api/videos/${id}`, editForm, { headers });
+      const { data } = await api.put(`/api/videos/${id}`, editForm, { headers });
       setVideo(prev => ({ ...prev, title: data.title, description: data.description, visibility: data.visibility }));
       setEditOpen(false);
     } catch {}
@@ -370,7 +370,7 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
 
   useEffect(() => {
     if (!token || isSelf) return;
-    axios.get('/api/auth/me', { headers }).then(r => {
+    api.get('/api/auth/me', { headers }).then(r => {
       setSubscribed(r.data.subscribedTo?.includes(c._id));
     }).catch(() => {});
   }, [c._id]);
@@ -378,7 +378,7 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
   const handleSubscribe = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/users/${c._id}/subscribe`, {}, { headers });
+      const { data } = await api.post(`/api/users/${c._id}/subscribe`, {}, { headers });
       setSubscribed(data.subscribed);
       setSubCount(data.subscribers);
     } catch {}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('/api/auth/register', {
+      const { data } = await api.post('/api/auth/register', {
         name: form.name,
         username: form.username,
         email: form.email,
@@ -45,7 +45,7 @@ export default function Register() {
       if (avatar) {
         const fd = new FormData();
         fd.append('avatar', avatar);
-        const res = await axios.post('/api/users/me/avatar', fd, {
+        const res = await api.post('/api/users/me/avatar', fd, {
           headers: { Authorization: `Bearer ${data.token}`, 'Content-Type': 'multipart/form-data' }
         });
         const updated = { ...data.user, avatar: res.data.avatar };

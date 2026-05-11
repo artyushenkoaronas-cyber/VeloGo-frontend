@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function Setup() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function Setup() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.put('/api/users/me/update', { username }, {
+      const { data } = await api.put('/api/users/me/update', { username }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const updated = { ...user, username: data.username };

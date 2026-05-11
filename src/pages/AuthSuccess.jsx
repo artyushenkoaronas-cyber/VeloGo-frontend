@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function AuthSuccess() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function AuthSuccess() {
     const token = params.get('token');
     if (!token) { navigate('/login'); return; }
     localStorage.setItem('velogo_token', token);
-    axios.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+    api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(({ data }) => {
         localStorage.setItem('velogo_user', JSON.stringify({
           id: data._id,

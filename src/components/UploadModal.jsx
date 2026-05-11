@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 const categories = ['All', 'Gaming', 'Music', 'Minecraft', 'Technology', 'Sports', 'Movies', 'News', 'Fashion', 'Food', 'Travel'];
 
@@ -60,7 +60,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     if (thumb) fd.append('thumbnail', thumb);
 
     try {
-      const { data: uploaded } = await axios.post('/api/videos/upload', fd, {
+      const { data: uploaded } = await api.post('/api/videos/upload', fd, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total))
       });
@@ -229,7 +229,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                       if (e.key === 'Enter') {
                         if (!collabInput.trim() || !uploadedVideoId) return;
                         try {
-                          const { data } = await axios.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+                          const { data } = await api.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
                           setCollabMsg(data.message);
                           setCollabInput('');
                         } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
@@ -243,7 +243,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   onClick={async () => {
                     if (!collabInput.trim() || !uploadedVideoId) return;
                     try {
-                      const { data } = await axios.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+                      const { data } = await api.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
                       setCollabMsg(data.message);
                       setCollabInput('');
                     } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }

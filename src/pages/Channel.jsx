@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import VideoCard from '../components/VideoCard';
-import axios from 'axios';
+import api from '../utils/api';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
 
@@ -28,9 +28,9 @@ export default function Channel() {
   useEffect(() => {
     if (!user.id) { navigate('/login'); return; }
     if (user.id) {
-      axios.get(`/api/videos/user/${user.id}`).then(r => setVideos(r.data)).catch(() => {});
+      api.get(`/api/videos/user/${user.id}`).then(r => setVideos(r.data)).catch(() => {});
       const token = localStorage.getItem('velogo_token');
-      axios.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
           const updated = { ...user, subscribers: r.data.subscribers };
           setUser(updated);
@@ -45,7 +45,7 @@ export default function Channel() {
     const fd = new FormData();
     fd.append('background', file);
     try {
-      const { data } = await axios.post('/api/users/me/background', fd, {
+      const { data } = await api.post('/api/users/me/background', fd, {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' }
       });
       const updated = { ...user, background: data.background };
@@ -60,7 +60,7 @@ export default function Channel() {
     const fd = new FormData();
     fd.append('avatar', file);
     try {
-      const { data } = await axios.post('/api/users/me/avatar', fd, {
+      const { data } = await api.post('/api/users/me/avatar', fd, {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' }
       });
       const updated = { ...user, avatar: data.avatar };
@@ -72,7 +72,7 @@ export default function Channel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data } = await axios.put('/api/users/me/update', form, { headers });
+      const { data } = await api.put('/api/users/me/update', form, { headers });
       const updated = { ...user, ...form, username: data.username };
       setUser(updated);
       localStorage.setItem('velogo_user', JSON.stringify(updated));

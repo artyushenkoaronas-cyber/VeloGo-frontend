@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VideoCard from '../components/VideoCard';
@@ -49,13 +49,13 @@ export default function PublicChannel() {
   const loadChannel = async () => {
     try {
       const isId = /^[a-f\d]{24}$/i.test(username);
-      const { data } = await axios.get(`/api/users/${isId ? username : `@${username}`}`);
+      const { data } = await api.get(`/api/users/${isId ? username : `@${username}`}`);
       setChannel(data);
       setSubCount(data.subscribers || 0);
 
       if (me.id && token) {
         try {
-          const meData = await axios.get('/api/auth/me', {
+          const meData = await api.get('/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setSubscribed(meData.data.subscribedTo?.includes(data._id));
@@ -63,14 +63,14 @@ export default function PublicChannel() {
       }
 
       try {
-        const vids = await axios.get(`/api/videos/user/${data._id}`);
+        const vids = await api.get(`/api/videos/user/${data._id}`);
         const videoList = vids.data || [];
         setVideos(videoList);
         setTotalViews(videoList.reduce((sum, v) => sum + (v.views || 0), 0));
       } catch {}
 
       try {
-        const pls = await axios.get(`/api/playlists/user/${data._id}`);
+        const pls = await api.get(`/api/playlists/user/${data._id}`);
         setPlaylists(pls.data || []);
       } catch {}
 
@@ -83,7 +83,7 @@ export default function PublicChannel() {
   const handleSubscribe = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/users/${channel._id}/subscribe`, {}, {
+      const { data } = await api.post(`/api/users/${channel._id}/subscribe`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSubscribed(data.subscribed);

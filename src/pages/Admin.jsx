@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 
@@ -25,26 +25,26 @@ export default function Admin() {
   }, []);
 
   const loadStats = async () => {
-    try { const { data } = await axios.get('/api/admin/stats', { headers }); setStats(data); }
+    try { const { data } = await api.get('/api/admin/stats', { headers }); setStats(data); }
     catch (err) { if (err.response?.status === 403) setUnauthorized(true); }
   };
   const loadUsers = async () => {
-    try { const { data } = await axios.get('/api/admin/users', { headers }); setUsers(data); } catch {}
+    try { const { data } = await api.get('/api/admin/users', { headers }); setUsers(data); } catch {}
   };
   const loadVideos = async () => {
-    try { const { data } = await axios.get('/api/admin/videos', { headers }); setVideos(data); } catch {}
+    try { const { data } = await api.get('/api/admin/videos', { headers }); setVideos(data); } catch {}
   };
 
   const toggleVerify = async (id) => {
     try {
-      const { data } = await axios.put(`/api/admin/users/${id}/verify`, {}, { headers });
+      const { data } = await api.put(`/api/admin/users/${id}/verify`, {}, { headers });
       setUsers(u => u.map(x => x._id === id ? { ...x, isVerified: data.isVerified } : x));
     } catch {}
   };
 
   const toggleOfficial = async (id) => {
     try {
-      const { data } = await axios.put(`/api/admin/users/${id}/official`, {}, { headers });
+      const { data } = await api.put(`/api/admin/users/${id}/official`, {}, { headers });
       setUsers(u => u.map(x => x._id === id ? { ...x, isOfficialArtist: data.isOfficialArtist } : x));
     } catch {}
   };
@@ -52,7 +52,7 @@ export default function Admin() {
   const toggleAdmin = async (id) => {
     if (!confirm('Toggle admin status for this user?')) return;
     try {
-      const { data } = await axios.put(`/api/admin/users/${id}/admin`, {}, { headers });
+      const { data } = await api.put(`/api/admin/users/${id}/admin`, {}, { headers });
       setUsers(u => u.map(x => x._id === id ? { ...x, isAdmin: data.isAdmin } : x));
     } catch {}
   };
@@ -60,7 +60,7 @@ export default function Admin() {
   const deleteUser = async (id) => {
     if (!confirm('Delete this user and all their videos?')) return;
     try {
-      await axios.delete(`/api/admin/users/${id}`, { headers });
+      await api.delete(`/api/admin/users/${id}`, { headers });
       setUsers(u => u.filter(x => x._id !== id));
     } catch {}
   };
@@ -68,21 +68,21 @@ export default function Admin() {
   const deleteVideo = async (id) => {
     if (!confirm('Delete this video?')) return;
     try {
-      await axios.delete(`/api/admin/videos/${id}`, { headers });
+      await api.delete(`/api/admin/videos/${id}`, { headers });
       setVideos(v => v.filter(x => x._id !== id));
     } catch {}
   };
 
   const setSubscribers = async (id, val) => {
     try {
-      const { data } = await axios.put(`/api/admin/users/${id}/subscribers`, { subscribers: val }, { headers });
+      const { data } = await api.put(`/api/admin/users/${id}/subscribers`, { subscribers: val }, { headers });
       setUsers(u => u.map(x => x._id === id ? { ...x, subscribers: data.subscribers } : x));
     } catch {}
   };
 
   const setViews = async (id, val) => {
     try {
-      const { data } = await axios.put(`/api/admin/videos/${id}/views`, { views: val }, { headers });
+      const { data } = await api.put(`/api/admin/videos/${id}/views`, { views: val }, { headers });
       setVideos(v => v.map(x => x._id === id ? { ...x, views: data.views } : x));
     } catch {}
   };
@@ -189,7 +189,7 @@ function UserRow({ u, me, isLast, headers, onVerify, onOfficial, onAdmin, onDele
   const loadUserVideos = async () => {
     if (videosLoaded) return;
     try {
-      const { data } = await axios.get(`/api/admin/users/${u._id}/videos`, { headers });
+      const { data } = await api.get(`/api/admin/users/${u._id}/videos`, { headers });
       setUserVideos(data);
       setVideosLoaded(true);
     } catch {}
@@ -295,14 +295,14 @@ function AdminVideoItem({ v, headers, onUpdate }) {
 
   const setViews = async () => {
     try {
-      const { data } = await axios.put(`/api/admin/videos/${v._id}/views`, { views: Number(viewsInput) }, { headers });
+      const { data } = await api.put(`/api/admin/videos/${v._id}/views`, { views: Number(viewsInput) }, { headers });
       onUpdate({ views: data.views });
     } catch {}
   };
 
   const setLikes = async () => {
     try {
-      const { data } = await axios.put(`/api/admin/videos/${v._id}/likes`, { likes: Number(likesInput) }, { headers });
+      const { data } = await api.put(`/api/admin/videos/${v._id}/likes`, { likes: Number(likesInput) }, { headers });
       onUpdate({ likes: Array(data.likes) });
     } catch {}
   };
@@ -341,7 +341,7 @@ function VideoRow({ v, isLast, headers, onDelete, onSetViews }) {
 
   const setLikes = async () => {
     try {
-      await axios.put(`/api/admin/videos/${v._id}/likes`, { likes: Number(likesInput) }, { headers });
+      await api.put(`/api/admin/videos/${v._id}/likes`, { likes: Number(likesInput) }, { headers });
     } catch {}
   };
 

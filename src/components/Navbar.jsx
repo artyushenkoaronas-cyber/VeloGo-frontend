@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import UploadModal from './UploadModal';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
@@ -46,7 +46,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
     if (!token) return;
     const load = async () => {
       try {
-        const { data } = await axios.get('/api/notifications', { headers: notifHeaders });
+        const { data } = await api.get('/api/notifications', { headers: notifHeaders });
         setNotifications(data);
         setUnreadCount(data.filter(n => !n.read).length);
       } catch {}
@@ -60,7 +60,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
     setNotifOpen(p => !p);
     if (unreadCount > 0) {
       try {
-        await axios.put('/api/notifications/read', {}, { headers: notifHeaders });
+        await api.put('/api/notifications/read', {}, { headers: notifHeaders });
         setUnreadCount(0);
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       } catch {}
@@ -69,7 +69,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
 
   const respondToCollab = async (notifId, action) => {
     try {
-      await axios.put(`/api/notifications/${notifId}/respond`, { action }, { headers: notifHeaders });
+      await api.put(`/api/notifications/${notifId}/respond`, { action }, { headers: notifHeaders });
       setNotifications(prev => prev.filter(n => n._id !== notifId));
     } catch {}
   };
@@ -81,7 +81,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
     if (val.trim().length < 1) { setSuggestions([]); return; }
     searchTimer.current = setTimeout(async () => {
       try {
-        const { data } = await axios.get('/api/videos', { params: { search: val } });
+        const { data } = await api.get('/api/videos', { params: { search: val } });
         const videoSugg = data.slice(0, 5).map(v => ({ type: 'video', text: v.title, id: v._id }));
         const channelMap = {};
         data.forEach(v => {

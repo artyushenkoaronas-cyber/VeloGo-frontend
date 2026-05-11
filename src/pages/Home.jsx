@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VideoCard from '../components/VideoCard';
@@ -25,7 +25,7 @@ export default function Home() {
       const params = {};
       if (activeCategory !== 'All') params.category = activeCategory;
       if (searchQuery) params.search = searchQuery;
-      const { data } = await axios.get('/api/videos', { params });
+      const { data } = await api.get('/api/videos', { params });
       setVideos(data);
     } catch {}
     setLoading(false);

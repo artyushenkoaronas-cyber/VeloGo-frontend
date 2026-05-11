@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 const VISIBILITY_ICONS = {
   public: (
@@ -51,7 +51,7 @@ export default function SaveToPlaylistModal({ videoId, onClose }) {
 
   const loadPlaylists = async () => {
     try {
-      const { data } = await axios.get('/api/playlists/mine', { headers });
+      const { data } = await api.get('/api/playlists/mine', { headers });
       setPlaylists(data);
       const map = {};
       data.forEach(p => { map[p._id] = p.videos.includes(videoId); });
@@ -61,7 +61,7 @@ export default function SaveToPlaylistModal({ videoId, onClose }) {
 
   const toggle = async (plId) => {
     try {
-      const { data } = await axios.put(`/api/playlists/${plId}/videos/${videoId}`, {}, { headers });
+      const { data } = await api.put(`/api/playlists/${plId}/videos/${videoId}`, {}, { headers });
       setSaved(s => ({ ...s, [plId]: data.saved }));
     } catch {}
   };
@@ -70,13 +70,13 @@ export default function SaveToPlaylistModal({ videoId, onClose }) {
     if (!title.trim()) return;
     setLoading(true);
     try {
-      const { data } = await axios.post('/api/playlists', {
+      const { data } = await api.post('/api/playlists', {
         title: title.trim(),
         visibility,
         collaborate,
         collaboratorUsername: collaborate ? collabUser : ''
       }, { headers });
-      await axios.put(`/api/playlists/${data._id}/videos/${videoId}`, {}, { headers });
+      await api.put(`/api/playlists/${data._id}/videos/${videoId}`, {}, { headers });
       setPlaylists(p => [data, ...p]);
       setSaved(s => ({ ...s, [data._id]: true }));
       setCreating(false);

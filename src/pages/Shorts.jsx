@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import UploadModal from '../components/UploadModal';
@@ -22,7 +22,7 @@ export default function Shorts() {
   const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
 
   useEffect(() => {
-    axios.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
+    api.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function Shorts() {
           onClose={() => setUploadOpen(false)}
           onSuccess={() => {
             setUploadOpen(false);
-            axios.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
+            api.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
           }}
         />
       )}
@@ -111,7 +111,7 @@ export default function Shorts() {
           onClose={() => setUploadOpen(false)}
           onSuccess={() => {
             setUploadOpen(false);
-            axios.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
+            api.get('/api/videos/shorts').then(r => setShorts(r.data)).catch(() => {});
           }}
         />
       )}
@@ -159,7 +159,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
   const handleLike = async () => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/videos/${short._id}/like`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${short._id}/like`, {}, { headers });
       setLikes(data.likes);
       setLiked(data.liked);
     } catch {}
@@ -167,7 +167,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
 
   const loadComments = async () => {
     try {
-      const { data } = await axios.get(`/api/videos/${short._id}/comments`);
+      const { data } = await api.get(`/api/videos/${short._id}/comments`);
       setComments(data);
     } catch {}
   };
@@ -176,7 +176,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     if (!token) return navigate('/login');
     if (!commentText.trim()) return;
     try {
-      const { data } = await axios.post(`/api/videos/${short._id}/comments`, { text: commentText }, { headers });
+      const { data } = await api.post(`/api/videos/${short._id}/comments`, { text: commentText }, { headers });
       setComments(p => [data, ...p]);
       setCommentText('');
     } catch {}

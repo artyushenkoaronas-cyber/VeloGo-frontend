@@ -1,7 +1,7 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
 
@@ -32,7 +32,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
 
   const loadComments = async () => {
     try {
-      const { data } = await axios.get(`/api/videos/${videoId}/comments`);
+      const { data } = await api.get(`/api/videos/${videoId}/comments`);
       setComments(data);
       const pinned = data.find(c => c.isPinned);
       if (pinned) setPinnedId(pinned._id);
@@ -45,7 +45,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
     if (!body.trim()) return;
     if (!parentId) setSending(true);
     try {
-      const { data } = await axios.post(
+      const { data } = await api.post(
         `/api/videos/${videoId}/comments`,
         { text: body, parentId },
         { headers }
@@ -59,21 +59,21 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
   const handleLike = async (commentId) => {
     if (!token) return navigate('/login');
     try {
-      const { data } = await axios.post(`/api/videos/${videoId}/comments/${commentId}/like`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${videoId}/comments/${commentId}/like`, {}, { headers });
       setComments(prev => prev.map(c => c._id === commentId ? { ...c, likes: Array(data.likes).fill(''), _liked: data.liked } : c));
     } catch {}
   };
 
   const handleHeart = async (commentId) => {
     try {
-      const { data } = await axios.post(`/api/videos/${videoId}/comments/${commentId}/heart`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${videoId}/comments/${commentId}/heart`, {}, { headers });
       setComments(prev => prev.map(c => c._id === commentId ? { ...c, creatorHeart: data.creatorHeart } : c));
     } catch {}
   };
 
   const handleDelete = async (commentId) => {
     try {
-      await axios.delete(`/api/videos/${videoId}/comments/${commentId}`, { headers });
+      await api.delete(`/api/videos/${videoId}/comments/${commentId}`, { headers });
       setComments(prev => prev.filter(c => c._id !== commentId && c.parentId !== commentId));
       if (pinnedId === commentId) setPinnedId(null);
     } catch {}
@@ -81,7 +81,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
 
   const handlePin = async (commentId) => {
     try {
-      const { data } = await axios.post(`/api/videos/${videoId}/comments/${commentId}/pin`, {}, { headers });
+      const { data } = await api.post(`/api/videos/${videoId}/comments/${commentId}/pin`, {}, { headers });
       setComments(cs => cs.map(c => ({
         ...c,
         isPinned: c._id === commentId ? data.isPinned : false,
