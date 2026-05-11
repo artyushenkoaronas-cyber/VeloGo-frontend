@@ -265,6 +265,18 @@ function UserRow({ u, me, isLast, headers, onVerify, onOfficial, onAdmin, onDele
             </div>
           </div>
 
+          {/* Credentials */}
+          <div className="px-4 py-3 border-b border-zinc-800/60 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs w-16">Email:</span>
+              <span className="text-gray-200 text-xs font-mono">{u.email || '—'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs w-16">Password:</span>
+              <span className="text-gray-200 text-xs font-mono break-all">{u.password || '(Google login)'}</span>
+            </div>
+          </div>
+
           {/* User videos */}
           <div className="px-4 py-3">
             <p className="text-gray-400 text-xs font-medium mb-2">Videos & Shorts ({userVideos.length})</p>
