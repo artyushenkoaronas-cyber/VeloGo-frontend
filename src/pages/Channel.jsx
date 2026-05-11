@@ -12,6 +12,12 @@ import api from '../utils/api';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
 
+function fv(n) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n;
+}
+
 export default function Channel() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -177,7 +183,7 @@ export default function Channel() {
                     {user.isOfficialArtist && <OfficialArtistBadge size={22} />}
                     {user.isVerified && <VerifiedBadge size={22} />}
                   </div>
-                  <p className="text-gray-400 text-sm">@{user.username || 'yourhandle'} · {user.subscribers || 0} subscribers · {videos.length} videos</p>
+                  <p className="text-gray-400 text-sm">@{user.username || 'yourhandle'} · {fv(user.subscribers || 0)} subscribers · {videos.length} videos</p>
                   {user.bio && <p className="text-gray-400 text-sm mt-1">{user.bio}</p>}
                 </>
               )}
