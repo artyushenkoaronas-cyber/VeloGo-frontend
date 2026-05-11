@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -91,7 +92,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
   };
 
   const myAvatar = me.avatar
-    ? (me.avatar.startsWith('http') ? me.avatar : `http://localhost:5000${me.avatar}`)
+    ? mediaUrl(me.avatar)
     : null;
 
   const topLevel = comments.filter(c => !c.parentId || c.parentId === null);
@@ -171,10 +172,10 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
   const [replyText, setReplyText] = useState('');
 
   const authorAvatar = c.author?.avatar
-    ? (c.author.avatar.startsWith('http') ? c.author.avatar : `http://localhost:5000${c.author.avatar}`)
+    ? mediaUrl(c.author.avatar)
     : null;
   const uploaderAvatarSrc = uploaderAvatar
-    ? (uploaderAvatar.startsWith('http') ? uploaderAvatar : `http://localhost:5000${uploaderAvatar}`)
+    ? mediaUrl(uploaderAvatar)
     : null;
   const isOwn = me.id === c.author?._id || me.isAdmin || isOwner;
   const likesCount = c.likes?.length || 0;
@@ -312,7 +313,7 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
           <div className="mt-3 space-y-4 pl-1">
             {replies.map(r => {
               const rAvatar = r.author?.avatar
-                ? (r.author.avatar.startsWith('http') ? r.author.avatar : `http://localhost:5000${r.author.avatar}`)
+                ? mediaUrl(r.author.avatar)
                 : null;
               const isOwnReply = me.id === r.author?._id || me.isAdmin || isOwner;
               const rLikes = r.likes?.length || 0;

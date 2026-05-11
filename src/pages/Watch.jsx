@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -135,9 +136,9 @@ export default function Watch() {
     navigate(uploader.username ? `/@${uploader.username}` : `/@${uploader._id}`);
   };
 
-  const videoSrc = `http://localhost:5000${video.videoUrl}`;
+  const videoSrc = mediaUrl(video.videoUrl);
   const uploaderAvatar = video.uploader?.avatar
-    ? (video.uploader.avatar.startsWith('http') ? video.uploader.avatar : `http://localhost:5000${video.uploader.avatar}`)
+    ? mediaUrl(video.uploader.avatar)
     : null;
 
   return (
@@ -328,7 +329,7 @@ export default function Watch() {
                 {(playlist.videos || []).map((v, idx) => {
                   const isActive = v._id === id;
                   const t = v.thumbnail
-                    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+                    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
                     : null;
                   return (
                     <div key={v._id} onClick={() => navigate(`/watch/${v._id}?list=${listId}`)}
@@ -383,7 +384,7 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
     } catch {}
   };
 
-  const avatar = c.avatar ? (c.avatar.startsWith('http') ? c.avatar : `http://localhost:5000${c.avatar}`) : null;
+  const avatar = c.avatar ? mediaUrl(c.avatar) : null;
 
   return (
     <div className="flex items-center gap-3">
@@ -412,9 +413,9 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
 
 function RecommendedCard({ video }) {
   const navigate = useNavigate();
-  const thumb = video.thumbnail ? `http://localhost:5000${video.thumbnail}` : null;
+  const thumb = video.thumbnail ? mediaUrl(video.thumbnail) : null;
   const avatar = video.uploader?.avatar
-    ? (video.uploader.avatar.startsWith('http') ? video.uploader.avatar : `http://localhost:5000${video.uploader.avatar}`)
+    ? mediaUrl(video.uploader.avatar)
     : null;
 
   function fv(n) {

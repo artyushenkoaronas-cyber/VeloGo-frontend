@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -238,8 +239,8 @@ export default function Navbar({ onMenuToggle, onUpload }) {
                       <p className="text-gray-500 text-sm">No notifications</p>
                     </div>
                   ) : notifications.map(n => {
-                    const fromAvatar = n.from?.avatar ? (n.from.avatar.startsWith('http') ? n.from.avatar : `http://localhost:5000${n.from.avatar}`) : null;
-                    const thumb = n.video?.thumbnail ? `http://localhost:5000${n.video.thumbnail}` : null;
+                    const fromAvatar = n.from?.avatar ? mediaUrl(n.from.avatar) : null;
+                    const thumb = n.video?.thumbnail ? mediaUrl(n.video.thumbnail) : null;
                     return (
                       <div key={n._id} className={`px-4 py-3 border-b border-zinc-800 last:border-0 ${!n.read ? 'bg-blue-600/5' : ''}`}>
                         <div className="flex gap-3 items-start">
@@ -311,7 +312,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
   const [panel, setPanel] = useState('main'); // main | switch | language
 
   const avatarSrc = user?.avatar
-    ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`)
+    ? mediaUrl(user.avatar)
     : null;
 
   const go = (path) => { onClose(); navigate(path); };

@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -118,7 +119,7 @@ export default function PublicChannel() {
   );
 
   const avatarSrc = channel?.avatar
-    ? (channel.avatar.startsWith('http') ? channel.avatar : `http://localhost:5000${channel.avatar}`)
+    ? mediaUrl(channel.avatar)
     : null;
 
   return (
@@ -130,7 +131,7 @@ export default function PublicChannel() {
         {/* Banner / Background */}
         <div className="w-full h-40 overflow-hidden bg-zinc-800">
           {(channel?.background || channel?.banner)
-            ? <img src={(() => { const s = channel.background || channel.banner; return s.startsWith('http') ? s : `http://localhost:5000${s}`; })()} className="w-full h-full object-cover" />
+            ? <img src={(() => { const s = channel.background || channel.banner; return mediaUrl(s); })()} className="w-full h-full object-cover" />
             : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
         </div>
 
@@ -256,7 +257,7 @@ export default function PublicChannel() {
                   <div key={pl._id} className="cursor-pointer group" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
                     <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
                       {pl.videos?.[0]?.thumbnail
-                        ? <img src={`http://localhost:5000${pl.videos[0].thumbnail}`} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition" />
                         : <div className="w-full h-full flex items-center justify-center">
                             <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
@@ -298,7 +299,7 @@ function PlaylistRow({ playlist, navigate }) {
   if (videos.length === 0) return null;
 
   const thumb = (v) => v.thumbnail
-    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
     : null;
 
   const playAll = () => navigate(`/watch/${videos[0]._id}?list=${playlist._id}`);
@@ -360,7 +361,7 @@ function PlaylistRow({ playlist, navigate }) {
 function HorizontalVideoRow({ videos, navigate }) {
   const scrollRef = useRef(null);
   const thumb = (v) => v.thumbnail
-    ? (v.thumbnail.startsWith('http') ? v.thumbnail : `http://localhost:5000${v.thumbnail}`)
+    ? (mediaUrl(v.thumbnail)mediaUrl(v.thumbnail))
     : null;
   const scroll = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: 'smooth' });
 

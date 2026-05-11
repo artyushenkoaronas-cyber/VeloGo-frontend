@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -130,7 +131,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
   const headers = { Authorization: `Bearer ${token}` };
 
   const uploaderAvatar = short.uploader?.avatar
-    ? (short.uploader.avatar.startsWith('http') ? short.uploader.avatar : `http://localhost:5000${short.uploader.avatar}`)
+    ? mediaUrl(short.uploader.avatar)
     : null;
 
   useEffect(() => {
@@ -194,7 +195,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
       {/* Video */}
       <video
         ref={videoRef}
-        src={`http://localhost:5000${short.videoUrl}`}
+        src={mediaUrl(short.videoUrl)}
         loop
         muted={muted}
         playsInline
@@ -320,7 +321,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
                 <div key={c._id} className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {c.author?.avatar
-                      ? <img src={c.author.avatar.startsWith('http') ? c.author.avatar : `http://localhost:5000${c.author.avatar}`} className="w-full h-full object-cover" />
+                      ? <img src={mediaUrl(c.author.avatar)} className="w-full h-full object-cover" />
                       : <span className="text-white text-xs font-bold">{c.author?.name?.[0]?.toUpperCase()}</span>}
                   </div>
                   <div>

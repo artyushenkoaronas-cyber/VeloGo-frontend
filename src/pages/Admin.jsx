@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -207,7 +208,7 @@ function UserRow({ u, me, isLast, headers, onVerify, onOfficial, onAdmin, onDele
       <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition cursor-pointer" onClick={handleExpand}>
         <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0">
           {u.avatar
-            ? <img src={u.avatar.startsWith('http') ? u.avatar : `http://localhost:5000${u.avatar}`} className="w-full h-full object-cover" />
+            ? <img src={mediaUrl(u.avatar)} className="w-full h-full object-cover" />
             : <span className="text-white text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>}
         </div>
         <div className="flex-1 min-w-0">

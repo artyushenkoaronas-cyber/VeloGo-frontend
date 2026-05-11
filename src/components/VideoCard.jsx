@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
@@ -20,9 +21,9 @@ function fv(n) {
 
 export default function VideoCard({ video }) {
   const navigate = useNavigate();
-  const thumb = video.thumbnail ? `http://localhost:5000${video.thumbnail}` : null;
+  const thumb = video.thumbnail ? mediaUrl(video.thumbnail) : null;
   const avatar = video.uploader?.avatar
-    ? (video.uploader.avatar.startsWith('http') ? video.uploader.avatar : `http://localhost:5000${video.uploader.avatar}`)
+    ? (mediaUrl(video.uploader.avatar))
     : null;
 
   const goChannel = (e) => {

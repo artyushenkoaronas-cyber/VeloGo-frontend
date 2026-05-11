@@ -1,3 +1,4 @@
+import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -84,7 +85,7 @@ export default function Channel() {
   };
 
   const avatarSrc = user.avatar
-    ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`)
+    ? mediaUrl(user.avatar)
     : null;
 
   const initial = user?.name?.[0]?.toUpperCase() || 'V';
@@ -98,7 +99,7 @@ export default function Channel() {
         {/* Banner / Background */}
         <div className="w-full h-40 relative overflow-hidden group/banner bg-zinc-800">
           {user.background
-            ? <img src={user.background.startsWith('http') ? user.background : `http://localhost:5000${user.background}`} className="w-full h-full object-cover" />
+            ? <img src={mediaUrl(user.background)} className="w-full h-full object-cover" />
             : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
           <button onClick={() => bgRef.current.click()}
             className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-full transition opacity-0 group-hover/banner:opacity-100">
