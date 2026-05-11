@@ -43,6 +43,11 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const handleFile = (e) => {
     const f = e.target.files[0];
     if (!f) return;
+    if (f.size > 500 * 1024 * 1024) {
+      alert(`File is too large (${(f.size / 1024 / 1024).toFixed(0)} MB). Maximum size is 500 MB.`);
+      e.target.value = '';
+      return;
+    }
     loadFileWithDuration(f);
   };
 
@@ -57,6 +62,10 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     e.preventDefault();
     const f = e.dataTransfer.files[0];
     if (f && f.type.startsWith('video/')) {
+      if (f.size > 500 * 1024 * 1024) {
+        alert(`File is too large (${(f.size / 1024 / 1024).toFixed(0)} MB). Maximum size is 500 MB.`);
+        return;
+      }
       loadFileWithDuration(f);
     }
   };
@@ -140,6 +149,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
             <div className="text-center">
               <p className="text-white text-lg font-medium">Drag and drop video files to upload</p>
               <p className="text-gray-400 text-sm mt-1">Your videos will be private until you publish them.</p>
+              <p className="text-gray-500 text-xs mt-1">Max file size: 500 MB</p>
             </div>
             <input ref={fileRef} type="file" accept="video/*" onChange={handleFile} className="hidden" />
             <button onClick={() => fileRef.current.click()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-medium transition">
