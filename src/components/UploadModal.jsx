@@ -10,6 +10,9 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const [thumbPreview, setThumbPreview] = useState(null);
   const [preview, setPreview] = useState(null);
   const [videoDuration, setVideoDuration] = useState(null);
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(null);
+  const trimVideoRef = useRef(null);
   const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, isMusicVideo: false, sound: '' });
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -30,6 +33,8 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     vid.src = url;
     vid.onloadedmetadata = () => {
       setVideoDuration(vid.duration);
+      setTrimStart(0);
+      setTrimEnd(Math.min(vid.duration, 30));
       setStep('details');
     };
     vid.onerror = () => setStep('details');
@@ -58,12 +63,17 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
 
   const handleUpload = async () => {
     if (form.isShort && videoDuration !== null) {
-      if (videoDuration < 3) {
+      if (videoDuration < 3 && (trimEnd === null || trimEnd - trimStart < 3)) {
         setError('Shorts must be at least 3 seconds long.');
         return;
       }
-      if (videoDuration > 30) {
-        setError('Shorts cannot be longer than 30 seconds.');
+      const selectedDuration = (trimEnd ?? videoDuration) - trimStart;
+      if (selectedDuration < 3) {
+        setError('Selected trim must be at least 3 seconds.');
+        return;
+      }
+      if (selectedDuration > 30) {
+        setError('Selected trim cannot exceed 30 seconds.');
         return;
       }
     }
@@ -86,6 +96,14 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
         onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total))
       });
       setUploadedVideoId(uploaded._id);
+      // Save trim points if Short was trimmed
+      if (form.isShort && videoDuration !== null && videoDuration > 30) {
+        try {
+          await api.put(`/api/videos/${uploaded._id}`, { trimStart, trimEnd }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch {}
+      }
       setStep('done');
     } catch {
       setError('Upload failed. Try again.');
@@ -205,13 +223,54 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isShort ? 'translate-x-5' : ''}`} />
                 </button>
               </div>
-              {form.isShort && videoDuration !== null && (videoDuration < 3 || videoDuration > 30) && (
-                <p className="text-red-400 text-xs px-1">
-                  {videoDuration < 3
-                    ? `Video is too short (${videoDuration.toFixed(1)}s). Shorts must be at least 3 seconds.`
-                    : `Video is too long (${Math.round(videoDuration)}s). Shorts cannot exceed 30 seconds.`}
-                </p>
+              {form.isShort && videoDuration !== null && videoDuration < 3 && (
+                <p className="text-red-400 text-xs px-1">Video is too short ({videoDuration.toFixed(1)}s). Minimum 3 seconds.</p>
               )}
+              {form.isShort && videoDuration !== null && videoDuration > 30 && (() => {
+                const selDur = (trimEnd ?? videoDuration) - trimStart;
+                const fmt = s => `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+                return (
+                  <div className="bg-zinc-800 rounded-xl p-3 space-y-2 border border-zinc-700">
+                    <p className="text-yellow-400 text-xs font-medium">Video is {Math.round(videoDuration)}s — trim to max 30s</p>
+                    <video
+                      ref={trimVideoRef}
+                      src={preview}
+                      className="w-full rounded-lg aspect-video object-cover bg-black max-h-32"
+                      playsInline muted
+                      onTimeUpdate={e => {
+                        const el = e.target;
+                        if (trimEnd !== null && el.currentTime >= trimEnd) { el.currentTime = trimStart; el.pause(); }
+                      }}
+                    />
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>Start: {fmt(trimStart)}</span>
+                        <span>End: {fmt(trimEnd ?? videoDuration)}</span>
+                        <span className={selDur > 30 || selDur < 3 ? 'text-red-400' : 'text-green-400'}>{selDur.toFixed(1)}s</span>
+                      </div>
+                      <label className="text-gray-500 text-xs">Start</label>
+                      <input type="range" min={0} max={Math.max(0, (trimEnd ?? videoDuration) - 3)} step={0.1}
+                        value={trimStart}
+                        onChange={e => {
+                          const v = Number(e.target.value);
+                          setTrimStart(v);
+                          if (trimVideoRef.current) trimVideoRef.current.currentTime = v;
+                        }}
+                        className="w-full accent-red-500" />
+                      <label className="text-gray-500 text-xs">End</label>
+                      <input type="range" min={Math.min(videoDuration, trimStart + 3)} max={videoDuration} step={0.1}
+                        value={trimEnd ?? videoDuration}
+                        onChange={e => setTrimEnd(Number(e.target.value))}
+                        className="w-full accent-red-500" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { if (trimVideoRef.current) { trimVideoRef.current.currentTime = trimStart; trimVideoRef.current.play().catch(() => {}); } }}
+                      className="text-xs text-white bg-zinc-700 hover:bg-zinc-600 px-3 py-1 rounded-full transition"
+                    >▶ Preview trim</button>
+                  </div>
+                );
+              })()}
               {form.isShort && (
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Sound / Song name</label>
