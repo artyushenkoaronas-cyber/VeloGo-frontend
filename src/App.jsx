@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import api from './utils/api';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -16,6 +18,8 @@ const PrivateRoute = ({ children }) => {
 };
 
 export default function App() {
+  useEffect(() => { api.get('/api/videos').catch(() => {}); }, []);
+
   return (
     <BrowserRouter>
       <Routes>
