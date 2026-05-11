@@ -348,6 +348,8 @@ function VideoRow({ v, isLast, headers, onDelete, onSetViews }) {
   const [expanded, setExpanded] = useState(false);
   const [viewsInput, setViewsInput] = useState(String(v.views ?? 0));
   const [likesInput, setLikesInput] = useState(String(v.likes?.length ?? 0));
+  const [comments, setComments] = useState([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
 
   useEffect(() => { setViewsInput(String(v.views ?? 0)); }, [v.views]);
 
@@ -357,9 +359,18 @@ function VideoRow({ v, isLast, headers, onDelete, onSetViews }) {
     } catch {}
   };
 
+  const loadComments = async () => {
+    if (commentsLoaded) return;
+    try {
+      const { data } = await api.get(`/api/admin/videos/${v._id}/comments`, { headers });
+      setComments(data);
+      setCommentsLoaded(true);
+    } catch {}
+  };
+
   return (
     <div className={`${!isLast ? 'border-b border-zinc-800' : ''}`}>
-      <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition cursor-pointer" onClick={() => setExpanded(p => !p)}>
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition cursor-pointer" onClick={() => { setExpanded(p => !p); if (!expanded) loadComments(); }}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             {v.isShort && <span className="text-[10px] bg-red-600/20 text-red-400 px-1.5 py-0.5 rounded-full">Short</span>}
@@ -393,8 +404,41 @@ function VideoRow({ v, isLast, headers, onDelete, onSetViews }) {
             <button onClick={e => { e.stopPropagation(); setLikes(); }}
               className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition">Set</button>
           </div>
+          {/* Comments */}
+          {comments.length > 0 && (
+            <div className="w-full mt-2 border-t border-zinc-700 pt-3 space-y-2">
+              <p className="text-gray-400 text-xs font-medium">Comments ({comments.length})</p>
+              {comments.map(c => (
+                <CommentLikeItem key={c._id} c={c} headers={headers}
+                  onUpdate={likes => setComments(prev => prev.map(x => x._id === c._id ? { ...x, likes: Array(likes) } : x))} />
+              ))}
+            </div>
+          )}
+          {commentsLoaded && comments.length === 0 && (
+            <p className="w-full text-gray-600 text-xs mt-2">No comments yet.</p>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function CommentLikeItem({ c, headers, onUpdate }) {
+  const [input, setInput] = useState(String(c.likes?.length ?? 0));
+  useEffect(() => { setInput(String(c.likes?.length ?? 0)); }, [c.likes]);
+  const set = async () => {
+    try {
+      const { data } = await api.put(`/api/admin/comments/${c._id}/likes`, { likes: Number(input) }, { headers });
+      onUpdate(data.likes);
+    } catch {}
+  };
+  return (
+    <div className="flex items-center gap-2 bg-zinc-700/40 rounded-lg px-3 py-2">
+      <p className="text-gray-300 text-xs flex-1 truncate">"{c.text}" — <span className="text-gray-500">@{c.author?.username}</span></p>
+      <span className="text-gray-500 text-[11px]">👍 {c.likes?.length ?? 0}</span>
+      <input type="number" min="0" value={input} onChange={e => setInput(e.target.value)}
+        className="w-16 bg-zinc-700 border border-zinc-600 text-white text-xs rounded px-2 py-0.5 focus:outline-none" />
+      <button onClick={set} className="text-[11px] bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded transition">Set</button>
     </div>
   );
 }

@@ -44,7 +44,7 @@ export default function Channel() {
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
-          const updated = { ...user, subscribers: r.data.subscribers };
+          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, avatar: r.data.avatar || user.avatar };
           setUser(updated);
           localStorage.setItem('velogo_user', JSON.stringify(updated));
         }).catch(() => {});
