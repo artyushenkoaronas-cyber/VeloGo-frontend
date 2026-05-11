@@ -5,6 +5,7 @@ const BASE = import.meta.env.VITE_API_URL ||
 
 export function mediaUrl(path) {
   if (!path) return null;
+  if (path.startsWith('http://localhost:5000')) return path.replace('http://localhost:5000', BASE);
   if (path.startsWith('http')) return path;
   return `${BASE}${path}`;
 }
