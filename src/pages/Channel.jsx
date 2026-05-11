@@ -21,6 +21,7 @@ export default function Channel() {
   const [form, setForm] = useState({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [cropFile, setCropFile] = useState(null);
   const [bgCropFile, setBgCropFile] = useState(null);
   const avatarRef = useRef(null);
@@ -33,6 +34,7 @@ export default function Channel() {
     if (!user.id) { navigate('/login'); return; }
     if (user.id) {
       api.get(`/api/videos/user/${user.id}`).then(r => setVideos(r.data)).catch(() => {});
+      api.get('/api/playlists/mine', { headers }).then(r => setPlaylists(r.data)).catch(() => {});
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
@@ -258,7 +260,36 @@ export default function Channel() {
               </div>
             )
           )}
-          {activeTab !== 'Videos' && (
+          {activeTab === 'Playlists' && (
+            playlists.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-white font-medium mb-1">No playlists yet</p>
+                <p className="text-gray-500 text-sm">Create a playlist by saving a video.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
+                {playlists.map(pl => (
+                  <div key={pl._id} className="cursor-pointer group" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
+                    <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
+                      {pl.videos?.[0]?.thumbnail
+                        ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        : <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
+                            </svg>
+                          </div>}
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                        {pl.videos?.length || 0} videos
+                      </div>
+                    </div>
+                    <h3 className="text-white text-sm font-medium line-clamp-2">{pl.title}</h3>
+                    <p className="text-gray-400 text-xs capitalize">{pl.visibility}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+          {activeTab !== 'Videos' && activeTab !== 'Playlists' && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-gray-500 text-sm">{activeTab} coming soon.</p>
             </div>
