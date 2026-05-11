@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import VideoCard from '../components/VideoCard';
+import AvatarCropModal from '../components/AvatarCropModal';
 import api from '../utils/api';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
@@ -19,6 +20,7 @@ export default function Channel() {
   const [form, setForm] = useState({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [cropFile, setCropFile] = useState(null);
   const avatarRef = useRef(null);
   const bgRef = useRef(null);
 
@@ -54,11 +56,17 @@ export default function Channel() {
     } catch {}
   };
 
-  const handleAvatarChange = async (e) => {
+  const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setCropFile(file);
+    e.target.value = '';
+  };
+
+  const handleCropSave = async (croppedFile) => {
+    setCropFile(null);
     const fd = new FormData();
-    fd.append('avatar', file);
+    fd.append('avatar', croppedFile);
     try {
       const { data } = await api.post('/api/users/me/avatar', fd, {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' }
@@ -92,6 +100,7 @@ export default function Channel() {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
+      {cropFile && <AvatarCropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
       <Navbar onMenuToggle={() => setSidebarOpen(p => !p)} />
       <Sidebar open={sidebarOpen} />
 
