@@ -291,6 +291,29 @@ export default function Channel() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
               <div className="bg-zinc-900 rounded-2xl p-6 w-80 space-y-4">
                 <h2 className="text-white text-lg font-semibold">Edit playlist</h2>
+
+                {/* Thumbnail picker */}
+                <div>
+                  <p className="text-gray-400 text-xs mb-2">Thumbnail</p>
+                  <label className="relative block w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden cursor-pointer group border border-zinc-700 hover:border-zinc-500 transition">
+                    {editPlaylist.thumbnailPreview || editPlaylist.thumbnail
+                      ? <img src={editPlaylist.thumbnailPreview || mediaUrl(editPlaylist.thumbnail)} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-500">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                          <span className="text-xs">Upload thumbnail</span>
+                        </div>}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">Change</span>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files[0];
+                      if (!f) return;
+                      setEditPlaylist(p => ({ ...p, thumbnailFile: f, thumbnailPreview: URL.createObjectURL(f) }));
+                      e.target.value = '';
+                    }} />
+                  </label>
+                </div>
+
                 <input
                   value={editPlaylist.title}
                   onChange={e => setEditPlaylist(p => ({ ...p, title: e.target.value }))}
@@ -312,7 +335,18 @@ export default function Channel() {
                     onClick={async () => {
                       try {
                         await api.put(`/api/playlists/${editPlaylist._id}`, { title: editPlaylist.title, visibility: editPlaylist.visibility }, { headers });
-                        setPlaylists(prev => prev.map(p => p._id === editPlaylist._id ? { ...p, title: editPlaylist.title, visibility: editPlaylist.visibility } : p));
+                        let newThumb = editPlaylist.thumbnail;
+                        if (editPlaylist.thumbnailFile) {
+                          const fd = new FormData();
+                          fd.append('thumbnail', editPlaylist.thumbnailFile);
+                          const { data } = await api.post(`/api/playlists/${editPlaylist._id}/thumbnail`, fd, {
+                            headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+                          });
+                          newThumb = data.thumbnail;
+                        }
+                        setPlaylists(prev => prev.map(p => p._id === editPlaylist._id
+                          ? { ...p, title: editPlaylist.title, visibility: editPlaylist.visibility, thumbnail: newThumb }
+                          : p));
                         setEditPlaylist(null);
                       } catch { alert('Failed to save'); }
                     }}
@@ -371,8 +405,8 @@ export default function Channel() {
                     {playlists.map(pl => (
                       <div key={pl._id} className="flex-shrink-0 w-48 cursor-pointer group/card" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
                         <div className="w-48 aspect-video bg-zinc-800 rounded-xl overflow-hidden">
-                          {pl.videos?.[0]?.thumbnail
-                            ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
+                          {(pl.thumbnail || pl.videos?.[0]?.thumbnail)
+                            ? <img src={mediaUrl(pl.thumbnail || pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
                             : <div className="w-full h-full bg-zinc-700 flex items-center justify-center">
                                 <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
@@ -485,8 +519,8 @@ export default function Channel() {
                   <div key={pl._id} className="group/pl relative">
                     <div className="cursor-pointer" onClick={() => pl.videos?.[0] && navigate(`/watch/${pl.videos[0]._id || pl.videos[0]}?list=${pl._id}`)}>
                       <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
-                        {pl.videos?.[0]?.thumbnail
-                          ? <img src={mediaUrl(pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/pl:scale-105 transition" />
+                        {(pl.thumbnail || pl.videos?.[0]?.thumbnail)
+                          ? <img src={mediaUrl(pl.thumbnail || pl.videos[0].thumbnail)} className="w-full h-full object-cover group-hover/pl:scale-105 transition" />
                           : <div className="w-full h-full flex items-center justify-center">
                               <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h10" />
