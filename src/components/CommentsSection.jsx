@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import VerifiedBadge from './VerifiedBadge';
+import OfficialArtistBadge from './OfficialArtistBadge';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -222,6 +223,7 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
             className="flex items-center gap-1 hover:opacity-80 transition"
           >
             <span className="text-white text-sm font-medium">@{c.author?.username || c.author?.name}</span>
+            {c.author?.isOfficialArtist && <OfficialArtistBadge size={13} />}
             {c.author?.isVerified && <VerifiedBadge size={13} />}
           </button>
           <span className="text-gray-500 text-xs">{timeAgo(c.createdAt)}</span>
@@ -318,6 +320,7 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
                       <button onClick={() => r.author?.username && navigate(`/@${r.author.username}`)}
                         className="flex items-center gap-1 hover:opacity-80 transition">
                         <span className="text-white text-xs font-medium">@{r.author?.username || r.author?.name}</span>
+                        {r.author?.isOfficialArtist && <OfficialArtistBadge size={11} />}
                         {r.author?.isVerified && <VerifiedBadge size={11} />}
                       </button>
                       <span className="text-gray-500 text-[11px]">{timeAgo(r.createdAt)}</span>

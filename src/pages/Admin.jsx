@@ -41,6 +41,13 @@ export default function Admin() {
     } catch {}
   };
 
+  const toggleOfficial = async (id) => {
+    try {
+      const { data } = await axios.put(`/api/admin/users/${id}/official`, {}, { headers });
+      setUsers(u => u.map(x => x._id === id ? { ...x, isOfficialArtist: data.isOfficialArtist } : x));
+    } catch {}
+  };
+
   const toggleAdmin = async (id) => {
     if (!confirm('Toggle admin status for this user?')) return;
     try {
@@ -143,6 +150,7 @@ export default function Admin() {
                 <UserRow key={u._id} u={u} me={me} isLast={i === users.length - 1}
                   headers={headers}
                   onVerify={() => toggleVerify(u._id)}
+                  onOfficial={() => toggleOfficial(u._id)}
                   onAdmin={() => toggleAdmin(u._id)}
                   onDelete={() => deleteUser(u._id)}
                   onSetSubs={(val) => setSubscribers(u._id, val)}
@@ -169,7 +177,7 @@ export default function Admin() {
   );
 }
 
-function UserRow({ u, me, isLast, headers, onVerify, onAdmin, onDelete, onSetSubs }) {
+function UserRow({ u, me, isLast, headers, onVerify, onOfficial, onAdmin, onDelete, onSetSubs }) {
   const [expanded, setExpanded] = useState(false);
   const [subsInput, setSubsInput] = useState(String(u.subscribers ?? 0));
   const [userVideos, setUserVideos] = useState([]);
@@ -206,6 +214,7 @@ function UserRow({ u, me, isLast, headers, onVerify, onAdmin, onDelete, onSetSub
           <div className="flex items-center gap-2">
             <p className="text-white text-sm font-medium truncate">{u.name}</p>
             {u.isAdmin && <span className="text-[10px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-full">Admin</span>}
+            {u.isOfficialArtist && <span className="text-[10px] text-purple-400 bg-purple-400/10 px-1.5 py-0.5 rounded-full">🎵 Official</span>}
             {u.isVerified && <span className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded-full">✓ Verified</span>}
           </div>
           <p className="text-gray-400 text-xs truncate">{u.email} · @{u.username || '—'} · {u.subscribers ?? 0} subs</p>
@@ -219,6 +228,10 @@ function UserRow({ u, me, isLast, headers, onVerify, onAdmin, onDelete, onSetSub
         <div className="bg-zinc-800/30 border-t border-zinc-800">
           {/* User actions */}
           <div className="px-4 py-3 flex flex-wrap gap-2 items-center border-b border-zinc-800/60">
+            <button onClick={e => { e.stopPropagation(); onOfficial(); }}
+              className={`text-xs px-3 py-1.5 rounded-lg transition ${u.isOfficialArtist ? 'bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}>
+              {u.isOfficialArtist ? 'Remove Official' : '🎵 Official Artist'}
+            </button>
             <button onClick={e => { e.stopPropagation(); onVerify(); }}
               className={`text-xs px-3 py-1.5 rounded-lg transition ${u.isVerified ? 'bg-zinc-700 hover:bg-zinc-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
               {u.isVerified ? 'Unverify' : 'Verify ✓'}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import UploadModal from './UploadModal';
 import VerifiedBadge from './VerifiedBadge';
+import OfficialArtistBadge from './OfficialArtistBadge';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -332,6 +333,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <p className="text-white text-sm font-medium truncate">{user?.name}</p>
+              {user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
               {user?.isVerified && <VerifiedBadge size={13} />}
             </div>
             <p className="text-gray-400 text-xs truncate">{user?.email}</p>
@@ -384,6 +386,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
         <div>
           <div className="flex items-center gap-1">
             <p className="text-white text-sm font-medium">{user?.name}</p>
+            {user?.isOfficialArtist && <OfficialArtistBadge size={14} />}
             {user?.isVerified && <VerifiedBadge size={14} />}
           </div>
           <p className="text-gray-400 text-xs">{user?.email}</p>

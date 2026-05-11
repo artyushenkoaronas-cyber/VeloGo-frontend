@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VideoCard from '../components/VideoCard';
 import VerifiedBadge from '../components/VerifiedBadge';
+import OfficialArtistBadge from '../components/OfficialArtistBadge';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
 
@@ -138,6 +139,7 @@ export default function PublicChannel() {
             <div className="pb-2 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
+                {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}
                 {channel?.isVerified && <VerifiedBadge size={22} />}
               </div>
               <p className="text-gray-400 text-sm">

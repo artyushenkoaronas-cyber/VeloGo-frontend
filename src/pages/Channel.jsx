@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VerifiedBadge from '../components/VerifiedBadge';
+import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import VideoCard from '../components/VideoCard';
 import axios from 'axios';
 
@@ -124,6 +125,7 @@ export default function Channel() {
                 <>
                   <div className="flex items-center gap-2">
                     <h1 className="text-white text-2xl font-bold">{user.name}</h1>
+                    {user.isOfficialArtist && <OfficialArtistBadge size={22} />}
                     {user.isVerified && <VerifiedBadge size={22} />}
                   </div>
                   <p className="text-gray-400 text-sm">@{user.username || 'yourhandle'} · {user.subscribers || 0} subscribers · {videos.length} videos</p>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
+import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import CommentsSection from '../components/CommentsSection';
 
 function timeAgo(date) {
@@ -213,6 +214,7 @@ export default function Watch() {
                   <button onClick={() => goChannel(video.uploader)}
                     className="flex items-center gap-1 hover:opacity-80 transition">
                     <p className="text-white text-sm font-medium">{video.uploader?.name}</p>
+                    {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={16} />}
                     {video.uploader?.isVerified && <VerifiedBadge size={16} />}
                   </button>
                   {video.collaborators?.length > 0 && (
@@ -348,6 +350,7 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
         <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)}
           className="flex items-center gap-1 hover:opacity-80 transition">
           <span className="text-white text-sm font-medium">{c.name}</span>
+          {c.isOfficialArtist && <OfficialArtistBadge size={14} />}
           {c.isVerified && <VerifiedBadge size={14} />}
         </button>
         <p className="text-gray-400 text-xs">@{c.username || c._id} · {fv(subCount)} subscribers</p>
@@ -396,6 +399,7 @@ function RecommendedCard({ video }) {
         <p className="text-white text-xs font-medium line-clamp-2 leading-snug mb-1">{video.title}</p>
         <div className="flex items-center gap-1">
           <p className="text-gray-400 text-xs">{video.uploader?.name}</p>
+          {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={12} />}
           {video.uploader?.isVerified && <VerifiedBadge size={12} />}
         </div>
         <p className="text-gray-400 text-xs">{fv(video.views)} views · {timeAgo(video.createdAt)}</p>

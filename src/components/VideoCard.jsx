@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from './VerifiedBadge';
+import OfficialArtistBadge from './OfficialArtistBadge';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -55,6 +56,7 @@ export default function VideoCard({ video }) {
           <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug mb-1">{video.title}</h3>
           <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition">
             <span className="text-gray-400 text-xs">{video.uploader?.name}</span>
+            {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
             {video.uploader?.isVerified && <VerifiedBadge size={13} />}
           </button>
           <p className="text-gray-400 text-xs">{fv(video.views)} views · {timeAgo(video.createdAt)}</p>
