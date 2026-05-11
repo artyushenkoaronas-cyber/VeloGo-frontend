@@ -4,6 +4,7 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
+import SaveToPlaylistModal from '../components/SaveToPlaylistModal';
 import CommentsSection from '../components/CommentsSection';
 
 function timeAgo(date) {
@@ -35,6 +36,7 @@ export default function Watch() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', visibility: 'public' });
   const [editSaving, setEditSaving] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
   const token = localStorage.getItem('velogo_token');
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
@@ -266,12 +268,14 @@ export default function Watch() {
                 </svg>
                 Share
               </button>
-              <button className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm px-4 py-2 rounded-full transition">
+              <button onClick={() => me?.id ? setSaveOpen(true) : navigate('/login')}
+                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm px-4 py-2 rounded-full transition">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
                 Save
               </button>
+              {saveOpen && <SaveToPlaylistModal videoId={id} onClose={() => setSaveOpen(false)} />}
             </div>
           </div>
 
