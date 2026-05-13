@@ -88,32 +88,66 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
     }
     setStep('uploading');
     setError('');
-    const fd = new FormData();
-    fd.append('video', file);
-    fd.append('title', form.title);
-    fd.append('description', form.description);
-    fd.append('visibility', form.visibility);
-    fd.append('category', form.category);
-    fd.append('isShort', form.isShort ? 'true' : 'false');
-    fd.append('isMusicVideo', form.isMusicVideo ? 'true' : 'false');
-    fd.append('commentsDisabled', form.commentsDisabled ? 'true' : 'false');
-    fd.append('sound', form.sound);
-    if (thumb) fd.append('thumbnail', thumb);
 
     try {
-      const { data: uploaded } = await api.post('/api/videos/upload', fd, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total))
+      // Step 1: get signed params from backend
+      const { data: sigData } = await api.get('/api/videos/upload-signature', {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setUploadedVideoId(uploaded._id);
-      // Save trim points if Short was trimmed
-      if (form.isShort && videoDuration !== null && videoDuration > 30) {
-        try {
-          await api.put(`/api/videos/${uploaded._id}`, { trimStart, trimEnd }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        } catch {}
+
+      // Step 2: upload video directly to Cloudinary (bypasses Render timeout)
+      const videoFd = new FormData();
+      videoFd.append('file', file);
+      videoFd.append('api_key', sigData.api_key);
+      videoFd.append('timestamp', sigData.timestamp);
+      videoFd.append('signature', sigData.signature);
+      videoFd.append('folder', sigData.folder);
+      const videoRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/video/upload`,
+        { method: 'POST', body: videoFd }
+      );
+      if (!videoRes.ok) throw new Error('Video upload to Cloudinary failed');
+      const videoData = await videoRes.json();
+      setProgress(80);
+
+      // Step 3: upload thumbnail directly to Cloudinary if provided
+      let thumbUrl = null;
+      if (thumb) {
+        const { data: thumbSig } = await api.get('/api/videos/upload-signature?type=thumbnail', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const thumbFd = new FormData();
+        thumbFd.append('file', thumb);
+        thumbFd.append('api_key', thumbSig.api_key);
+        thumbFd.append('timestamp', thumbSig.timestamp);
+        thumbFd.append('signature', thumbSig.signature);
+        thumbFd.append('folder', thumbSig.folder);
+        const thumbRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${thumbSig.cloud_name}/image/upload`,
+          { method: 'POST', body: thumbFd }
+        );
+        if (thumbRes.ok) { const td = await thumbRes.json(); thumbUrl = td.secure_url; }
       }
+      setProgress(95);
+
+      // Step 4: save metadata to backend
+      const { data: uploaded } = await api.post('/api/videos/save', {
+        title: form.title,
+        description: form.description,
+        visibility: form.visibility,
+        category: form.category,
+        isShort: form.isShort,
+        isMusicVideo: form.isMusicVideo,
+        commentsDisabled: form.commentsDisabled,
+        sound: form.sound,
+        videoUrl: videoData.secure_url,
+        thumbnail: thumbUrl,
+        trimStart: form.isShort && videoDuration > 30 ? trimStart : 0,
+        trimEnd: form.isShort && videoDuration > 30 ? trimEnd : null
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      setUploadedVideoId(uploaded._id);
+      setProgress(100);
       setStep('done');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Upload failed. Try again.');
