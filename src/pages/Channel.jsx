@@ -35,8 +35,11 @@ export default function Channel() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [cropFile, setCropFile] = useState(null);
   const [bgCropFile, setBgCropFile] = useState(null);
+  const [thumbUploading, setThumbUploading] = useState(null); // video _id being updated
   const avatarRef = useRef(null);
   const bgRef = useRef(null);
+  const thumbInputRef = useRef(null);
+  const thumbTargetRef = useRef(null); // video _id for thumb input
 
   const token = localStorage.getItem('velogo_token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -88,6 +91,29 @@ export default function Channel() {
     e.target.value = '';
   };
 
+  const handleThumbChange = async (e) => {
+    const file = e.target.files?.[0];
+    const videoId = thumbTargetRef.current;
+    if (!file || !videoId) return;
+    e.target.value = '';
+    setThumbUploading(videoId);
+    try {
+      const { data: sigData } = await api.get('/api/videos/upload-signature?type=thumbnail', { headers });
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sigData.api_key);
+      fd.append('timestamp', sigData.timestamp);
+      fd.append('signature', sigData.signature);
+      fd.append('folder', sigData.folder);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${sigData.cloud_name}/image/upload`, { method: 'POST', body: fd });
+      const cloudData = await res.json();
+      await api.put(`/api/videos/${videoId}`, { thumbnail: cloudData.secure_url }, { headers });
+      setVideos(prev => prev.map(v => v._id === videoId ? { ...v, thumbnail: cloudData.secure_url } : v));
+      setShorts(prev => prev.map(v => v._id === videoId ? { ...v, thumbnail: cloudData.secure_url } : v));
+    } catch { alert('Failed to update thumbnail'); }
+    setThumbUploading(null);
+  };
+
   const handleCropSave = async (croppedFile) => {
     setCropFile(null);
     const fd = new FormData();
@@ -125,6 +151,7 @@ export default function Channel() {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
+      <input ref={thumbInputRef} type="file" accept="image/*" className="hidden" onChange={handleThumbChange} />
       {cropFile && <AvatarCropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
       {bgCropFile && <BgCropModal file={bgCropFile} onSave={handleBgCropSave} onClose={() => setBgCropFile(null)} />}
       {trimShort && <ShortTrimModal short={trimShort} onClose={() => setTrimShort(null)} onSaved={updated => setShorts(prev => prev.map(s => s._id === updated._id ? updated : s))} />}
@@ -438,6 +465,16 @@ export default function Channel() {
                 {videos.map(v => (
                   <div key={v._id} className="relative group/card">
                     <VideoCard video={v} />
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); thumbTargetRef.current = v._id; thumbInputRef.current?.click(); }}
+                      disabled={thumbUploading === v._id}
+                      className="absolute top-2 left-2 w-8 h-8 bg-black/70 hover:bg-zinc-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition z-10"
+                      title="Change thumbnail"
+                    >
+                      {thumbUploading === v._id
+                        ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                    </button>
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
