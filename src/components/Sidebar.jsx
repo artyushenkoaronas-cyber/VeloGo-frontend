@@ -18,14 +18,7 @@ const mainItems = [
     label: 'Subscriptions', path: '/subscriptions'
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c2.09 0 4.014.77 5.507 2.036L4.036 17.507A7.963 7.963 0 014 12c0-4.411 3.589-8 8-8zm0 16c-2.09 0-4.014-.77-5.507-2.036L19.964 6.493A7.963 7.963 0 0120 12c0 4.411-3.589 8-8 8z"/>
-        <circle cx="9" cy="10" r="1.5"/>
-        <circle cx="15" cy="10" r="1.5"/>
-        <path d="M12 17c2.5 0 4-1.5 4-2.5H8c0 1 1.5 2.5 4 2.5z"/>
-      </svg>
-    ),
+    icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
     label: 'VeloGoCord', path: '/velogram'
   },
 ];
