@@ -26,7 +26,7 @@ const mainItems = [
         <path d="M12 17c2.5 0 4-1.5 4-2.5H8c0 1 1.5 2.5 4 2.5z"/>
       </svg>
     ),
-    label: 'VeloGoTAGRAM', path: '/velogram'
+    label: 'VeloGoCord', path: '/velogram'
   },
 ];
 

@@ -16,7 +16,7 @@ export default function VeloGram() {
               <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c2.09 0 4.014.77 5.507 2.036L4.036 17.507A7.963 7.963 0 014 12c0-4.411 3.589-8 8-8zm0 16c-2.09 0-4.014-.77-5.507-2.036L19.964 6.493A7.963 7.963 0 0120 12c0 4.411-3.589 8-8 8z"/>
             </svg>
           </div>
-          <h1 className="text-white text-3xl font-bold mb-2">VeloGoTAGRAM</h1>
+          <h1 className="text-white text-3xl font-bold mb-2">VeloGoCord</h1>
           <p className="text-gray-500 text-sm">Coming soon</p>
         </div>
       </main>
