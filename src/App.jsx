@@ -1,6 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, Component } from 'react';
 import api from './utils/api';
+
+class ErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 40, color: '#fff', background: '#0f0f0f', minHeight: '100vh', fontFamily: 'monospace' }}>
+        <h2 style={{ color: '#f87171', marginBottom: 16 }}>Something crashed</h2>
+        <pre style={{ color: '#fca5a5', fontSize: 13, whiteSpace: 'pre-wrap' }}>{this.state.error?.message}{'\n'}{this.state.error?.stack}</pre>
+        <button onClick={() => window.location.href='/'} style={{ marginTop: 24, padding: '8px 20px', background: '#3f3f46', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Go home</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -26,6 +41,7 @@ export default function App() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/register" element={<Register />} />
@@ -41,5 +57,6 @@ export default function App() {
         <Route path="/velogram" element={<PrivateRoute><VeloGram /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
