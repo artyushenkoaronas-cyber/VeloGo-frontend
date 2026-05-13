@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useEffect, Component } from 'react';
 import api from './utils/api';
 
@@ -28,6 +28,7 @@ import Shorts from './pages/Shorts';
 import Setup from './pages/Setup';
 import VeloGram from './pages/VeloGram';
 import Subscriptions from './pages/Subscriptions';
+
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('velogo_token');
