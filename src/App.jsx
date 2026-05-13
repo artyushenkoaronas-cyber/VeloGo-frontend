@@ -38,7 +38,7 @@ const PrivateRoute = ({ children }) => {
 export default function App() {
   useEffect(() => {
     api.get('/ping').catch(() => {});
-    const interval = setInterval(() => api.get('/ping').catch(() => {}), 10 * 60 * 1000);
+    const interval = setInterval(() => api.get('/ping').catch(() => {}), 4 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

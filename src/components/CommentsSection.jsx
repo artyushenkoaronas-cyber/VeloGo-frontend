@@ -43,17 +43,31 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
     const body = replyText ?? text;
     if (!token) return navigate('/login');
     if (!body.trim()) return;
-    if (!parentId) setSending(true);
+
+    // Optimistic update — show immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = {
+      _id: tempId,
+      text: body,
+      parentId: parentId || null,
+      author: { _id: me.id, name: me.name, username: me.username, avatar: me.avatar, isVerified: me.isVerified },
+      likes: [],
+      createdAt: new Date().toISOString(),
+      _optimistic: true
+    };
+    setComments(prev => parentId ? [...prev, optimistic] : [optimistic, ...prev]);
+    if (!parentId) { setText(''); setFocused(false); }
+
     try {
       const { data } = await api.post(
         `/api/videos/${videoId}/comments`,
         { text: body, parentId },
         { headers }
       );
-      setComments(prev => [data, ...prev]);
-      if (!parentId) { setText(''); setFocused(false); }
-    } catch {}
-    if (!parentId) setSending(false);
+      setComments(prev => prev.map(c => c._id === tempId ? data : c));
+    } catch {
+      setComments(prev => prev.filter(c => c._id !== tempId));
+    }
   };
 
   const handleLike = async (commentId) => {
