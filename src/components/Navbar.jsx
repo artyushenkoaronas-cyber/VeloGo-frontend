@@ -151,7 +151,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
             <div className="absolute top-11 left-0 right-10 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl z-50 overflow-hidden py-2">
               {suggestions.map((s, i) => (
                 <button key={i} onClick={() => {
-                  if (s.type === 'channel' && s.username) { navigate(`/@${s.username}`); setSearchFocused(false); }
+                  if (s.type === 'channel' && s.username) { navigate(`/c/${s.username}`); setSearchFocused(false); }
                   else { handleSearchSubmit(s.text); }
                 }}
                   className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition text-left">

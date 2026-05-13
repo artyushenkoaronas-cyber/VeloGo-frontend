@@ -28,7 +28,7 @@ export default function VideoCard({ video }) {
 
   const goChannel = (e) => {
     e.stopPropagation();
-    const target = video.uploader?.username ? `/@${video.uploader.username}` : video.uploader?._id ? `/@${video.uploader._id}` : null;
+    const target = video.uploader?.username ? `/c/${video.uploader.username}` : video.uploader?._id ? `/c/${video.uploader._id}` : null;
     if (target) navigate(target);
   };
 
@@ -73,7 +73,7 @@ export default function VideoCard({ video }) {
                 <span className="text-gray-500 text-xs">and</span>
                 {video.collaborators.slice(0, 1).map(c => (
                   <span key={c._id} className="flex items-center gap-0.5">
-                    <button onClick={e => { e.stopPropagation(); navigate(c.username ? `/@${c.username}` : `/@${c._id}`); }}
+                    <button onClick={e => { e.stopPropagation(); navigate(c.username ? `/c/${c.username}` : `/c/${c._id}`); }}
                       className="text-gray-400 text-xs hover:text-white transition">{c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
                     {c.isVerified && <VerifiedBadge size={13} full />}

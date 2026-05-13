@@ -133,7 +133,7 @@ export default function Watch() {
 
   const goChannel = (uploader) => {
     if (!uploader) return;
-    navigate(uploader.username ? `/@${uploader.username}` : `/@${uploader._id}`);
+    navigate(uploader.username ? `/c/${uploader.username}` : `/c/${uploader._id}`);
   };
 
   const videoSrc = mediaUrl(video.videoUrl);
@@ -229,7 +229,7 @@ export default function Watch() {
                       and{' '}
                       {video.collaborators.map((c, i) => (
                         <span key={c._id}>
-                          <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)}
+                          <button onClick={() => navigate(c.username ? `/c/${c.username}` : `/c/${c._id}`)}
                             className="text-white font-medium hover:opacity-80 transition">
                             {c.name}
                           </button>
@@ -395,12 +395,12 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
 
   return (
     <div className="flex items-center gap-3">
-      <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)}
+      <button onClick={() => navigate(c.username ? `/c/${c.username}` : `/c/${c._id}`)}
         className="w-10 h-10 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden hover:opacity-90 transition">
         {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : <span className="text-white text-sm font-bold">{c.name?.[0]?.toUpperCase()}</span>}
       </button>
       <div className="flex-1 min-w-0">
-        <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)}
+        <button onClick={() => navigate(c.username ? `/c/${c.username}` : `/c/${c._id}`)}
           className="flex items-center gap-1 hover:opacity-80 transition">
           <span className="text-white text-sm font-medium">{c.name}</span>
           {c.isOfficialArtist && <OfficialArtistBadge size={14} />}
