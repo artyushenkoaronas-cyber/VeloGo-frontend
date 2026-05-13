@@ -148,6 +148,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
             comment={c}
             isPinned={c._id === pinnedId}
             isOwner={isOwner}
+            uploaderId={uploaderId}
             me={me}
             headers={headers}
             token={token}
@@ -166,7 +167,7 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
   );
 }
 
-function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploaderAvatar, replies, onLike, onHeart, onDelete, onPin, onReply, navigate }) {
+function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, token, uploaderAvatar, replies, onLike, onHeart, onDelete, onPin, onReply, navigate }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -227,7 +228,7 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
             </span>
           </div>
         )}
-        <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           <button
             onClick={() => c.author?.username && navigate(`/@${c.author.username}`)}
             className="flex items-center gap-1 hover:opacity-80 transition"
@@ -236,6 +237,9 @@ function CommentRow({ comment: c, isPinned, isOwner, me, headers, token, uploade
             {c.author?.isOfficialArtist && <OfficialArtistBadge size={13} />}
             {c.author?.isVerified && <VerifiedBadge size={13} />}
           </button>
+          {uploaderId && c.author?._id && c.author._id.toString() === uploaderId.toString() && (
+            <span className="text-xs bg-zinc-700 text-gray-200 px-1.5 py-0.5 rounded font-medium">Creator</span>
+          )}
           <span className="text-gray-500 text-xs">{timeAgo(c.createdAt)}</span>
         </div>
         <p className="text-gray-200 text-sm leading-relaxed">{c.text}</p>
