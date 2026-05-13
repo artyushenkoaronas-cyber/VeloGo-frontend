@@ -368,7 +368,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
               <div className="flex items-center gap-1">
                 <p className="text-white text-sm font-medium truncate">{user?.name}</p>
                 {user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-                {user?.isVerified && <VerifiedBadge size={13} />}
+                {user?.isVerified && <VerifiedBadge size={13} full />}
               </div>
               <p className="text-gray-400 text-xs truncate">{user?.email}</p>
             </div>
@@ -389,7 +389,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
                   <div className="flex items-center gap-1">
                     <p className="text-white text-sm font-medium truncate">{acc.user?.name}</p>
                     {acc.user?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-                    {acc.user?.isVerified && <VerifiedBadge size={13} />}
+                    {acc.user?.isVerified && <VerifiedBadge size={13} full />}
                   </div>
                   <p className="text-gray-400 text-xs truncate">{acc.user?.email}</p>
                 </div>
@@ -444,7 +444,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
           <div className="flex items-center gap-1">
             <p className="text-white text-sm font-medium">{user?.name}</p>
             {user?.isOfficialArtist && <OfficialArtistBadge size={14} />}
-            {user?.isVerified && <VerifiedBadge size={14} />}
+            {user?.isVerified && <VerifiedBadge size={14} full />}
           </div>
           <p className="text-gray-400 text-xs">{user?.email}</p>
           <button onClick={() => go('/channel')} className="text-blue-400 text-xs hover:text-blue-300 mt-0.5">{t('viewYourChannel')}</button>

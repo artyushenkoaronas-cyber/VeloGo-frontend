@@ -44,7 +44,7 @@ export default function Channel() {
   useEffect(() => {
     if (!user.id) { navigate('/login'); return; }
     if (user.id) {
-      api.get(`/api/videos/user/${user.id}`).then(r => {
+      api.get('/api/videos/mine', { headers }).then(r => {
         const all = r.data;
         setVideos(all.filter(v => !v.isShort));
         setShorts(all.filter(v => v.isShort));
@@ -230,7 +230,7 @@ export default function Channel() {
                   <div className="flex items-center gap-2">
                     <h1 className="text-white text-2xl font-bold">{user.name}</h1>
                     {user.isOfficialArtist && <OfficialArtistBadge size={22} />}
-                    {user.isVerified && <VerifiedBadge size={22} />}
+                    {user.isVerified && <VerifiedBadge size={22} full />}
                   </div>
                   <p className="text-gray-400 text-sm">@{user.username || 'yourhandle'} · {fv(user.subscribers || 0)} subscribers · {videos.length} videos</p>
                   {user.bio ? (

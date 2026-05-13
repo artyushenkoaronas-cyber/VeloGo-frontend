@@ -222,7 +222,7 @@ export default function Watch() {
                     className="flex items-center gap-1 hover:opacity-80 transition">
                     <p className="text-white text-sm font-medium">{video.uploader?.name}</p>
                     {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={16} />}
-                    {video.uploader?.isVerified && <VerifiedBadge size={16} />}
+                    {video.uploader?.isVerified && <VerifiedBadge size={16} full />}
                   </button>
                   {video.collaborators?.length > 0 && (
                     <span className="text-gray-400 text-sm">
@@ -404,7 +404,7 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
           className="flex items-center gap-1 hover:opacity-80 transition">
           <span className="text-white text-sm font-medium">{c.name}</span>
           {c.isOfficialArtist && <OfficialArtistBadge size={14} />}
-          {c.isVerified && <VerifiedBadge size={14} />}
+          {c.isVerified && <VerifiedBadge size={14} full />}
         </button>
         <p className="text-gray-400 text-xs">@{c.username || c._id} · {fv(subCount)} subscribers</p>
       </div>
@@ -453,7 +453,7 @@ function RecommendedCard({ video }) {
         <div className="flex items-center gap-1">
           <p className="text-gray-400 text-xs">{video.uploader?.name}</p>
           {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={12} />}
-          {video.uploader?.isVerified && <VerifiedBadge size={12} />}
+          {video.uploader?.isVerified && <VerifiedBadge size={12} full />}
         </div>
         <p className="text-gray-400 text-xs">{fv(video.views)} views · {timeAgo(video.createdAt)}</p>
       </div>

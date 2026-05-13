@@ -241,7 +241,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
             >
               <span className="text-white text-sm font-semibold">@{short.uploader?.username || short.uploader?.name}</span>
               {short.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
-              {short.uploader?.isVerified && <VerifiedBadge size={13} />}
+              {short.uploader?.isVerified && <VerifiedBadge size={13} full />}
             </button>
             {short.collaborators?.length > 0 && (
               <>
@@ -250,7 +250,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
                   <span key={c._id} className="flex items-center gap-0.5">
                     <button onClick={() => navigate(c.username ? `/@${c.username}` : `/@${c._id}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
-                    {c.isVerified && <VerifiedBadge size={13} />}
+                    {c.isVerified && <VerifiedBadge size={13} full />}
                     {i < short.collaborators.length - 1 && <span className="text-gray-300 text-xs">,</span>}
                   </span>
                 ))}

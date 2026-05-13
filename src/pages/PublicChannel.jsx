@@ -187,7 +187,7 @@ export default function PublicChannel() {
               <div className="flex items-center gap-2">
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
                 {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}
-                {channel?.isVerified && <VerifiedBadge size={22} />}
+                {channel?.isVerified && <VerifiedBadge size={22} full />}
               </div>
               <p className="text-gray-400 text-sm">
                 @{channel?.username} · {fv(subCount)} subscribers · {videos.length} videos
