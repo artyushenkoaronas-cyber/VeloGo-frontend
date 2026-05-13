@@ -21,7 +21,6 @@ body {
 ══════════════════════════════════════ */
 html.light body {
   filter: invert(1) hue-rotate(180deg);
-  background-color: #ffffff;
 }
 
 /* Keep media looking natural */
