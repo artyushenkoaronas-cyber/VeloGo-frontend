@@ -50,7 +50,7 @@ export default function App() {
         <Route path="/setup" element={<Setup />} />
         <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
         <Route path="/channel" element={<PrivateRoute><Channel /></PrivateRoute>} />
-        <Route path="/@:username" element={<PrivateRoute><PublicChannel /></PrivateRoute>} />
+        <Route path="/@:username" element={<PublicChannel />} />
         <Route path="/watch/:id" element={<PrivateRoute><Watch /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
         <Route path="/shorts" element={<PrivateRoute><Shorts /></PrivateRoute>} />
