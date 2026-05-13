@@ -21,6 +21,7 @@ function safeParseUser() {
 }
 
 export default function PublicChannel() {
+  if (typeof window !== 'undefined') console.log('[PublicChannel] rendering');
   const { username } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
