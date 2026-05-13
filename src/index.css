@@ -15,99 +15,32 @@ body {
 }
 
 /* ══════════════════════════════════════
-   LIGHT MODE
+   LIGHT MODE — full invert + hue-rotate
+   Images / videos get counter-inverted
+   so they look natural
 ══════════════════════════════════════ */
-html.light {
-  color-scheme: light;
-}
-
 html.light body {
+  filter: invert(1) hue-rotate(180deg);
   background-color: #ffffff;
-  color: #0f0f0f;
 }
 
-/* Backgrounds */
-html.light .bg-\[#0f0f0f\]  { background-color: #ffffff !important; }
-html.light .bg-\[#121212\]  { background-color: #f2f2f2 !important; }
-html.light .bg-\[#212121\]  { background-color: #ffffff !important; }
-html.light .bg-zinc-950     { background-color: #f9f9f9 !important; }
-html.light .bg-zinc-900     { background-color: #ffffff !important; }
-html.light .bg-zinc-800     { background-color: #f2f2f2 !important; }
-html.light .bg-zinc-700     { background-color: #e5e5e5 !important; }
-html.light .bg-zinc-600     { background-color: #d4d4d4 !important; }
-html.light .bg-black\/80    { background-color: rgba(255,255,255,0.92) !important; }
-html.light .bg-black\/60    { background-color: rgba(0,0,0,0.06) !important; }
-html.light .bg-black\/70    { background-color: rgba(0,0,0,0.55) !important; }
-
-/* Text */
-html.light .text-white       { color: #0f0f0f !important; }
-html.light .text-gray-100    { color: #1a1a1a !important; }
-html.light .text-gray-200    { color: #262626 !important; }
-html.light .text-gray-300    { color: #404040 !important; }
-html.light .text-gray-400    { color: #606060 !important; }
-html.light .text-gray-500    { color: #878787 !important; }
-html.light .text-gray-600    { color: #9a9a9a !important; }
-html.light .text-zinc-400    { color: #606060 !important; }
-html.light .text-zinc-500    { color: #878787 !important; }
-
-/* Borders */
-html.light .border-zinc-800  { border-color: #e5e5e5 !important; }
-html.light .border-zinc-700  { border-color: #d4d4d4 !important; }
-html.light .border-zinc-600  { border-color: #c4c4c4 !important; }
-html.light .border-white     { border-color: #0f0f0f !important; }
-html.light .border-b         { border-color: #e5e5e5 !important; }
-
-/* Hover states */
-html.light .hover\:bg-zinc-800:hover { background-color: #f2f2f2 !important; }
-html.light .hover\:bg-zinc-700:hover { background-color: #e5e5e5 !important; }
-html.light .hover\:bg-zinc-600:hover { background-color: #d4d4d4 !important; }
-html.light .hover\:bg-zinc-900:hover { background-color: #f2f2f2 !important; }
-
-/* Active/selected pill (category bar) */
-html.light .bg-white.text-black { background-color: #0f0f0f !important; color: #ffffff !important; }
-
-/* Inputs & textareas */
-html.light input,
-html.light textarea,
-html.light select {
-  background-color: #f2f2f2 !important;
-  color: #0f0f0f !important;
-  border-color: #d4d4d4 !important;
-}
-html.light input::placeholder,
-html.light textarea::placeholder { color: #878787 !important; }
-
-/* Navbar */
-html.light nav,
-html.light header {
-  background-color: #ffffff !important;
-  border-bottom: 1px solid #e5e5e5 !important;
+/* Keep media looking natural */
+html.light img,
+html.light video,
+html.light iframe,
+html.light canvas,
+html.light [style*="background-image"] {
+  filter: invert(1) hue-rotate(180deg);
 }
 
-/* Sidebar */
-html.light aside {
-  background-color: #ffffff !important;
-}
-
-/* Cards / modals */
-html.light .rounded-xl,
-html.light .rounded-2xl {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+/* Keep colored badges / icons natural */
+html.light svg[style*="color: #BF5AF2"],
+html.light svg[style*="color: rgb"] {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 /* Scrollbar */
-html.light ::-webkit-scrollbar-track { background: #f2f2f2; }
-html.light ::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 4px; }
-html.light ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
-
-/* Ring / focus */
-html.light .ring-zinc-700  { --tw-ring-color: #d4d4d4 !important; }
-html.light .ring-\[#0f0f0f\] { --tw-ring-color: #e5e5e5 !important; }
-
-/* Shadows */
-html.light .shadow-xl  { box-shadow: 0 4px 20px rgba(0,0,0,0.10) !important; }
-html.light .shadow-2xl { box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important; }
-
-/* Dropdown / menu */
-html.light .bg-\[#212121\] { background-color: #ffffff !important; }
-html.light .divide-zinc-700 > * + * { border-color: #e5e5e5 !important; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #52525b; }
