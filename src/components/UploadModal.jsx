@@ -115,8 +115,8 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
         } catch {}
       }
       setStep('done');
-    } catch {
-      setError('Upload failed. Try again.');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Upload failed. Try again.');
       setStep('details');
     }
   };
