@@ -27,6 +27,7 @@ import AuthSuccess from './pages/AuthSuccess';
 import Shorts from './pages/Shorts';
 import Setup from './pages/Setup';
 import VeloGram from './pages/VeloGram';
+import Subscriptions from './pages/Subscriptions';
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('velogo_token');
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
         <Route path="/shorts" element={<PrivateRoute><Shorts /></PrivateRoute>} />
         <Route path="/velogram" element={<PrivateRoute><VeloGram /></PrivateRoute>} />
+        <Route path="/subscriptions" element={<PrivateRoute><Subscriptions /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>
