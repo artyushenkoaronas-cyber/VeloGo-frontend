@@ -17,6 +17,17 @@ const mainItems = [
     icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
     label: 'Subscriptions', path: '/subscriptions'
   },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c2.09 0 4.014.77 5.507 2.036L4.036 17.507A7.963 7.963 0 014 12c0-4.411 3.589-8 8-8zm0 16c-2.09 0-4.014-.77-5.507-2.036L19.964 6.493A7.963 7.963 0 0120 12c0 4.411-3.589 8-8 8z"/>
+        <circle cx="9" cy="10" r="1.5"/>
+        <circle cx="15" cy="10" r="1.5"/>
+        <path d="M12 17c2.5 0 4-1.5 4-2.5H8c0 1 1.5 2.5 4 2.5z"/>
+      </svg>
+    ),
+    label: 'VeloGoTAGRAM', path: '/velogram'
+  },
 ];
 
 const youItems = [
