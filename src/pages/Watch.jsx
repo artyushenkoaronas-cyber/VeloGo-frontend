@@ -40,6 +40,9 @@ export default function Watch() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', visibility: 'public' });
   const [editSaving, setEditSaving] = useState(false);
+  const [collabInput, setCollabInput] = useState('');
+  const [collabMsg, setCollabMsg] = useState('');
+  const [shareViews, setShareViews] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const token = localStorage.getItem('velogo_token');
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -201,6 +204,52 @@ export default function Watch() {
                   className="bg-zinc-700 hover:bg-zinc-600 text-white text-sm px-4 py-1.5 rounded-full transition">
                   Cancel
                 </button>
+              </div>
+
+              {/* Collab invite */}
+              <div className="border-t border-zinc-700 pt-3">
+                <p className="text-white text-xs font-semibold mb-2">Invite collaborator</p>
+                <div className="flex gap-2 mb-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">@</span>
+                    <input
+                      value={collabInput}
+                      onChange={e => setCollabInput(e.target.value)}
+                      onKeyDown={async e => {
+                        if (e.key !== 'Enter' || !collabInput.trim()) return;
+                        try {
+                          await api.put(`/api/videos/${id}`, { shareViewsWithCollaborators: shareViews }, { headers });
+                          const { data } = await api.post(`/api/videos/${id}/collaborators`, { username: collabInput.trim() }, { headers });
+                          setCollabMsg(data.message); setCollabInput('');
+                        } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
+                      }}
+                      placeholder="username"
+                      className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-lg pl-7 pr-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!collabInput.trim()) return;
+                      try {
+                        await api.put(`/api/videos/${id}`, { shareViewsWithCollaborators: shareViews }, { headers });
+                        const { data } = await api.post(`/api/videos/${id}/collaborators`, { username: collabInput.trim() }, { headers });
+                        setCollabMsg(data.message); setCollabInput('');
+                      } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg transition"
+                  >Invite</button>
+                </div>
+                <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">
+                  <div>
+                    <p className="text-white text-xs font-medium">Share views with collaborator</p>
+                    <p className="text-gray-500 text-xs">Their channel gets view credit too</p>
+                  </div>
+                  <button type="button" onClick={() => setShareViews(p => !p)}
+                    className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${shareViews ? 'bg-blue-500' : 'bg-zinc-600'}`}>
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${shareViews ? 'translate-x-4' : ''}`} />
+                  </button>
+                </div>
+                {collabMsg && <p className={`text-xs mt-1.5 ${collabMsg.includes('sent') ? 'text-green-400' : 'text-red-400'}`}>{collabMsg}</p>}
               </div>
             </div>
           )}
