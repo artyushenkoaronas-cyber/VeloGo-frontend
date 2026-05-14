@@ -13,11 +13,12 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
   const [trimStart, setTrimStart] = useState(0);
   const [trimEnd, setTrimEnd] = useState(null);
   const trimVideoRef = useRef(null);
-  const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, isMusicVideo: false, commentsDisabled: false, sound: '' });
+  const [form, setForm] = useState({ title: '', description: '', visibility: 'public', category: 'All', isShort: defaultShort, isMusicVideo: false, commentsDisabled: false, shareViewsWithCollaborators: false, hideFromChannel: false, sound: '' });
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [collabInput, setCollabInput] = useState('');
   const [collabMsg, setCollabMsg] = useState('');
+  const [shareViews, setShareViews] = useState(false);
   const [uploadedVideoId, setUploadedVideoId] = useState(null);
   const fileRef = useRef(null);
   const thumbRef = useRef(null);
@@ -142,6 +143,8 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
         sound: form.sound,
         videoUrl: videoData.secure_url,
         thumbnail: thumbUrl,
+        shareViewsWithCollaborators: form.shareViewsWithCollaborators,
+        hideFromChannel: form.hideFromChannel,
         trimStart: form.isShort && videoDuration > 30 ? trimStart : 0,
         trimEnd: form.isShort && videoDuration > 30 ? trimEnd : null
       }, { headers: { Authorization: `Bearer ${token}` } });
@@ -260,12 +263,20 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   <p className="text-white text-sm font-medium">Disable comments</p>
                   <p className="text-gray-500 text-xs">Nobody can comment on this video</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setForm(p => ({ ...p, commentsDisabled: !p.commentsDisabled }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${form.commentsDisabled ? 'bg-zinc-400' : 'bg-zinc-600'}`}
-                >
+                <button type="button" onClick={() => setForm(p => ({ ...p, commentsDisabled: !p.commentsDisabled }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.commentsDisabled ? 'bg-zinc-400' : 'bg-zinc-600'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.commentsDisabled ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-4 py-3 border border-zinc-700">
+                <div>
+                  <p className="text-white text-sm font-medium">Hide from channel tabs</p>
+                  <p className="text-gray-500 text-xs">Won't appear in Videos/Shorts tab, but shows in Home & search</p>
+                </div>
+                <button type="button" onClick={() => setForm(p => ({ ...p, hideFromChannel: !p.hideFromChannel }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.hideFromChannel ? 'bg-blue-500' : 'bg-zinc-600'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.hideFromChannel ? 'translate-x-5' : ''}`} />
                 </button>
               </div>
 
@@ -382,7 +393,7 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
             {/* Invite collaborators */}
             <div className="w-full max-w-sm mt-2">
               <p className="text-white text-sm font-medium mb-2">Invite collaborators</p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">@</span>
                   <input
@@ -392,9 +403,9 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                       if (e.key === 'Enter') {
                         if (!collabInput.trim() || !uploadedVideoId) return;
                         try {
+                          await api.put(`/api/videos/${uploadedVideoId}`, { shareViewsWithCollaborators: shareViews }, { headers: { Authorization: `Bearer ${token}` } });
                           const { data } = await api.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
-                          setCollabMsg(data.message);
-                          setCollabInput('');
+                          setCollabMsg(data.message); setCollabInput('');
                         } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
                       }
                     }}
@@ -406,14 +417,24 @@ export default function UploadModal({ onClose, onSuccess, defaultShort = false }
                   onClick={async () => {
                     if (!collabInput.trim() || !uploadedVideoId) return;
                     try {
+                      await api.put(`/api/videos/${uploadedVideoId}`, { shareViewsWithCollaborators: shareViews }, { headers: { Authorization: `Bearer ${token}` } });
                       const { data } = await api.post(`/api/videos/${uploadedVideoId}/collaborators`, { username: collabInput.trim() }, { headers: { Authorization: `Bearer ${token}` } });
-                      setCollabMsg(data.message);
-                      setCollabInput('');
+                      setCollabMsg(data.message); setCollabInput('');
                     } catch (err) { setCollabMsg(err.response?.data?.message || 'Error'); }
                   }}
                   className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
                 >
                   Invite
+                </button>
+              </div>
+              <div className="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">
+                <div>
+                  <p className="text-white text-xs font-medium">Share views with collaborator</p>
+                  <p className="text-gray-500 text-xs">Their channel gets view credit too</p>
+                </div>
+                <button type="button" onClick={() => setShareViews(p => !p)}
+                  className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${shareViews ? 'bg-blue-500' : 'bg-zinc-600'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${shareViews ? 'translate-x-4' : ''}`} />
                 </button>
               </div>
               {collabMsg && <p className={`text-xs mt-1.5 ${collabMsg.includes('sent') ? 'text-green-400' : 'text-red-400'}`}>{collabMsg}</p>}
