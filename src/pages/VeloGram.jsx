@@ -110,7 +110,7 @@ export default function VeloGram() {
               <path d="M100 30C61.3 30 30 61.3 30 100s31.3 70 70 70 70-31.3 70-70S138.7 30 100 30zm-15 95c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35zm50 0c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
             </svg>
             <p className="text-[#949ba4] text-base font-semibold">
-              {tab === 'Online' ? "No one's around to play with Wumpus." : tab === 'Pending' ? 'There are no pending friend requests. Here's Wumpus for now.' : "You don't have any friends to play with Wumpus."}
+              {tab === 'Online' ? "No one's around to play with Wumpus." : tab === 'Pending' ? "There are no pending friend requests." : "You don't have any friends yet."}
             </p>
             <p className="text-[#5c6068] text-sm">VeloGoCord messaging is coming soon!</p>
           </div>
