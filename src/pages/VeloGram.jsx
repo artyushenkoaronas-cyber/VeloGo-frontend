@@ -87,13 +87,15 @@ export default function VeloGram() {
     const text = msgInput.trim();
     setMsgInput('');
     // Optimistic
-    const temp = { _id: `t${Date.now()}`, from: me.id, to: activeDM._id, text, createdAt: new Date().toISOString() };
+    const tempId = `t${Date.now()}`;
+    const temp = { _id: tempId, from: me.id || me._id, to: activeDM._id, text, createdAt: new Date().toISOString(), _sending: true };
     setMessages(p => [...p, temp]);
     try {
       const { data } = await api.post(`/api/messages/${activeDM._id}`, { text }, { headers });
-      setMessages(p => p.map(m => m._id === temp._id ? data : m));
-    } catch {
-      setMessages(p => p.filter(m => m._id !== temp._id));
+      setMessages(p => p.map(m => m._id === tempId ? data : m));
+    } catch (err) {
+      // Mark as failed but keep visible
+      setMessages(p => p.map(m => m._id === tempId ? { ...m, _sending: false, _failed: true } : m));
     }
   };
 
@@ -256,7 +258,8 @@ export default function VeloGram() {
                   </div>
                   <div className="space-y-0.5">
                     {msgs.map((msg, i) => {
-                      const isMine = msg.from === me.id || msg.from?._id === me.id || msg.from?.toString() === me.id;
+                      const myId = me.id || me._id || '';
+                      const isMine = msg.from === myId || msg.from?._id === myId || msg.from?.toString() === myId;
                       const prevMsg = msgs[i - 1];
                       const sameAuthor = prevMsg && (prevMsg.from === msg.from || prevMsg.from?.toString() === msg.from?.toString());
                       const showHeader = !sameAuthor;
@@ -275,7 +278,10 @@ export default function VeloGram() {
                                 <span className="text-[#949ba4] text-xs">{timeStr(msg.createdAt)}</span>
                               </div>
                             )}
-                            <p className="text-[#dbdee1] text-sm leading-relaxed break-words">{msg.text}</p>
+                            <p className={`text-sm leading-relaxed break-words ${msg._failed ? 'text-red-400' : msg._sending ? 'text-[#dbdee1] opacity-60' : 'text-[#dbdee1]'}`}>
+                              {msg.text}
+                              {msg._failed && <span className="ml-2 text-xs text-red-400">(failed — retry)</span>}
+                            </p>
                           </div>
                         </div>
                       );
