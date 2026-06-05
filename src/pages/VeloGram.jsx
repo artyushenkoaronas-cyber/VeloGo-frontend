@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mediaUrl } from '../utils/mediaUrl';
 import api from '../utils/api';
+import VerifiedBadge from '../components/VerifiedBadge';
+import OfficialArtistBadge from '../components/OfficialArtistBadge';
 
 const TABS = ['Online', 'All', 'Pending', 'Add Friend'];
 
@@ -264,22 +266,27 @@ export default function VeloGram() {
                   <div className="space-y-0.5">
                     {msgs.map((msg, i) => {
                       const myId = me.id || me._id || '';
-                      const isMine = msg.from === myId || msg.from?._id === myId || msg.from?.toString() === myId;
+                      const fromId = msg.from?._id?.toString() || msg.from?.toString() || msg.from;
+                      const isMine = fromId === myId;
                       const prevMsg = msgs[i - 1];
-                      const sameAuthor = prevMsg && (prevMsg.from === msg.from || prevMsg.from?.toString() === msg.from?.toString());
+                      const prevFromId = prevMsg?.from?._id?.toString() || prevMsg?.from?.toString() || prevMsg?.from;
+                      const sameAuthor = prevMsg && prevFromId === fromId;
                       const showHeader = !sameAuthor;
-                      const author = isMine ? me : activeDM;
+                      // Use populated from data if available, fallback to me/activeDM
+                      const fromUser = msg.from?._id ? msg.from : (isMine ? me : activeDM);
                       return (
                         <div key={msg._id} className={`flex gap-3 hover:bg-[#2e3035] px-2 py-0.5 rounded group ${showHeader ? 'mt-3' : ''}`}>
                           <div className="w-10 flex-shrink-0 flex items-start justify-center pt-0.5">
                             {showHeader
-                              ? <Avatar user={author} size={10} />
+                              ? <Avatar user={fromUser} size={10} />
                               : <span className="text-[#949ba4] text-[10px] opacity-0 group-hover:opacity-100 pt-1">{timeStr(msg.createdAt)}</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             {showHeader && (
-                              <div className="flex items-baseline gap-2 mb-0.5">
-                                <span className="text-white text-sm font-semibold">{author.name}</span>
+                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                <span className="text-white text-sm font-semibold">{fromUser.name}</span>
+                                {fromUser.isOfficialArtist && <OfficialArtistBadge size={13} />}
+                                {fromUser.isVerified && <VerifiedBadge size={13} full />}
                                 <span className="text-[#949ba4] text-xs">{timeStr(msg.createdAt)}</span>
                               </div>
                             )}
