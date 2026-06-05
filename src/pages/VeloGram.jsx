@@ -43,9 +43,18 @@ export default function VeloGram() {
   const [msgInput, setMsgInput] = useState('');
   const [unread, setUnread] = useState({});
   const [imgUploading, setImgUploading] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
   const imgInputRef = useRef(null);
+
+  const copyMessage = (msg) => {
+    const text = msg.text || (msg.sharedVideo ? `${window.location.origin}/watch/${msg.sharedVideo._id || msg.sharedVideo}` : msg.image || '');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(msg._id);
+      setTimeout(() => setCopiedId(null), 1500);
+    }).catch(() => {});
+  };
 
   const avatarSrc = me.avatar ? mediaUrl(me.avatar) : null;
   const initial = me.name?.[0]?.toUpperCase() || 'V';
@@ -306,11 +315,20 @@ export default function VeloGram() {
                       // Use populated from data if available, fallback to me/activeDM
                       const fromUser = msg.from?._id ? msg.from : (isMine ? me : activeDM);
                       return (
-                        <div key={msg._id} className={`flex gap-3 hover:bg-[#2e3035] px-2 py-0.5 rounded group ${showHeader ? 'mt-3' : ''}`}>
+                        <div key={msg._id} className={`flex gap-3 hover:bg-[#2e3035] px-2 py-0.5 rounded group relative ${showHeader ? 'mt-3' : ''}`}>
                           <div className="w-10 flex-shrink-0 flex items-start justify-center pt-0.5">
                             {showHeader
                               ? <Avatar user={fromUser} size={10} />
                               : <span className="text-[#949ba4] text-[10px] opacity-0 group-hover:opacity-100 pt-1">{timeStr(msg.createdAt)}</span>}
+                          </div>
+                          {/* Copy button on hover */}
+                          <div className="absolute right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                            <button onClick={() => copyMessage(msg)}
+                              className="p-1.5 hover:bg-[#404249] rounded text-gray-400 hover:text-white transition relative" title="Copy">
+                              {copiedId === msg._id
+                                ? <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>}
+                            </button>
                           </div>
                           <div className="flex-1 min-w-0">
                             {showHeader && (
