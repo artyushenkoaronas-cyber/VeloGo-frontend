@@ -29,7 +29,8 @@ export default function Shorts() {
     const el = containerRef.current;
     if (!el) return;
     const onScroll = () => {
-      const idx = Math.round(el.scrollTop / window.innerHeight);
+      const itemH = el.clientHeight || window.innerHeight;
+      const idx = Math.round(el.scrollTop / itemH);
       setCurrent(idx);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
@@ -206,8 +207,8 @@ function ShortItem({ short, isActive, token, me, navigate }) {
 
   return (
     <div
-      className="relative flex items-center justify-center bg-black"
-      style={{ height: '100vh', scrollSnapAlign: 'start' }}
+      className="relative flex items-center justify-center bg-black flex-shrink-0"
+      style={{ height: '100vh', minHeight: '100vh', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
     >
       {/* Video */}
       <video
