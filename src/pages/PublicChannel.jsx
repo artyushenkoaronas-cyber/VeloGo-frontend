@@ -26,6 +26,7 @@ const { username } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('Videos');
   const [shortsSort, setShortsSort] = useState('latest');
+  const [videosSort, setVideosSort] = useState('latest');
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState([]);
   const [subscribed, setSubscribed] = useState(false);
@@ -256,17 +257,50 @@ const { username } = useParams();
           )}
 
           {/* VIDEOS tab */}
-          {activeTab === 'Videos' && (
-            videos.filter(v => !v.isShort).length === 0 ? (
+          {activeTab === 'Videos' && (() => {
+            const allVids = videos.filter(v => !v.isShort);
+            const sorted = [...allVids].sort((a, b) => {
+              if (videosSort === 'popular') return (b.views || 0) - (a.views || 0);
+              if (videosSort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+              return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            if (allVids.length === 0) return (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <p className="text-white font-medium">No videos yet</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
-                {videos.filter(v => !v.isShort).map(v => <VideoCard key={v._id} video={v} />)}
-              </div>
-            )
-          )}
+            );
+            return (
+              <>
+                <div className="flex gap-2 mb-4">
+                  {[['latest','Latest'],['popular','Popular'],['oldest','Oldest']].map(([val, label]) => (
+                    <button key={val} onClick={() => setVideosSort(val)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition border ${videosSort === val ? 'bg-white text-black border-white' : 'text-white border-zinc-600 hover:border-zinc-400'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-6">
+                  {sorted.map(v => (
+                    <div key={v._id} className="flex flex-col gap-2 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
+                      <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-900">
+                        {v.thumbnail
+                          ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                          : <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                              <svg className="w-10 h-10 text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z" />
+                              </svg>
+                            </div>}
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-medium line-clamp-2 leading-snug">{v.title}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{fv(v.views || 0)} views</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
 
           {/* SHORTS tab */}
           {activeTab === 'Shorts' && (() => {
