@@ -253,6 +253,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
                               {n.type === 'collab_request' && <><span className="font-semibold">@{n.from?.username || n.from?.name}</span> invited you to collaborate on <span className="font-semibold">"{n.video?.title}"</span></>}
                               {n.type === 'collab_accepted' && <><span className="font-semibold">@{n.from?.username || n.from?.name}</span> accepted your collaboration on <span className="font-semibold">"{n.video?.title}"</span></>}
                               {n.type === 'collab_declined' && <><span className="font-semibold">@{n.from?.username || n.from?.name}</span> declined your collaboration on <span className="font-semibold">"{n.video?.title}"</span></>}
+                              {n.type === 'new_subscriber' && <><span className="font-semibold">@{n.from?.username || n.from?.name}</span> subscribed to your channel 🔔</>}
                             </p>
                             {n.type === 'collab_request' && (
                               <div className="flex gap-2 mt-2">
