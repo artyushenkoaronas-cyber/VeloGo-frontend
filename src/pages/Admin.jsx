@@ -18,7 +18,6 @@ export default function Admin() {
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
-    if (!me.isAdmin) { setUnauthorized(true); return; }
     loadStats();
     loadUsers();
     loadVideos();
@@ -26,13 +25,15 @@ export default function Admin() {
 
   const loadStats = async () => {
     try { const { data } = await api.get('/api/admin/stats', { headers }); setStats(data); }
-    catch (err) { if (err.response?.status === 403) setUnauthorized(true); }
+    catch (err) { if (err.response?.status === 403 || err.response?.status === 401) setUnauthorized(true); }
   };
   const loadUsers = async () => {
-    try { const { data } = await api.get('/api/admin/users', { headers }); setUsers(data); } catch {}
+    try { const { data } = await api.get('/api/admin/users', { headers }); setUsers(data); }
+    catch (err) { if (err.response?.status === 403 || err.response?.status === 401) setUnauthorized(true); }
   };
   const loadVideos = async () => {
-    try { const { data } = await api.get('/api/admin/videos', { headers }); setVideos(data); } catch {}
+    try { const { data } = await api.get('/api/admin/videos', { headers }); setVideos(data); }
+    catch (err) { if (err.response?.status === 403 || err.response?.status === 401) setUnauthorized(true); }
   };
 
   const toggleVerify = async (id) => {
