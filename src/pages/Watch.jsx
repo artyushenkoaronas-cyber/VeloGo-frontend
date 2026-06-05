@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import SaveToPlaylistModal from '../components/SaveToPlaylistModal';
+import SendToDMModal from '../components/SendToDMModal';
 import CommentsSection from '../components/CommentsSection';
 
 function timeAgo(date) {
@@ -44,6 +45,7 @@ export default function Watch() {
   const [collabMsg, setCollabMsg] = useState('');
   const [shareViews, setShareViews] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const token = localStorage.getItem('velogo_token');
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const me = (() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } })();
@@ -337,6 +339,12 @@ export default function Watch() {
                 Save
               </button>
               {saveOpen && <SaveToPlaylistModal videoId={id} onClose={() => setSaveOpen(false)} />}
+              <button onClick={() => me?.id ? setSendOpen(true) : navigate('/login')}
+                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm px-4 py-2 rounded-full transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                Send
+              </button>
+              {sendOpen && video && <SendToDMModal video={video} onClose={() => setSendOpen(false)} />}
             </div>
           </div>
 

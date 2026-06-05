@@ -38,12 +38,14 @@ export default function VeloGram() {
   const [addInput, setAddInput] = useState('');
   const [addMsg, setAddMsg] = useState({ text: '', ok: false });
   const [sending, setSending] = useState(false);
-  const [activeDM, setActiveDM] = useState(null); // friend object
+  const [activeDM, setActiveDM] = useState(null);
   const [messages, setMessages] = useState([]);
   const [msgInput, setMsgInput] = useState('');
   const [unread, setUnread] = useState({});
+  const [imgUploading, setImgUploading] = useState(false);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+  const imgInputRef = useRef(null);
 
   const avatarSrc = me.avatar ? mediaUrl(me.avatar) : null;
   const initial = me.name?.[0]?.toUpperCase() || 'V';
@@ -99,6 +101,35 @@ export default function VeloGram() {
       // Mark as failed but keep visible
       setMessages(p => p.map(m => m._id === tempId ? { ...m, _sending: false, _failed: true } : m));
     }
+  };
+
+  const sendImage = async (file) => {
+    if (!file || !activeDM) return;
+    setImgUploading(true);
+    try {
+      const { data: sig } = await api.get('/api/videos/upload-signature', { headers });
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sig.api_key);
+      fd.append('timestamp', sig.timestamp);
+      fd.append('signature', sig.signature);
+      fd.append('folder', sig.folder);
+      const xhr = new XMLHttpRequest();
+      const cloudRes = await new Promise((resolve, reject) => {
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloud_name}/image/upload`);
+        xhr.onload = () => resolve(JSON.parse(xhr.responseText));
+        xhr.onerror = reject;
+        xhr.send(fd);
+      });
+      const tempId = `t${Date.now()}`;
+      const temp = { _id: tempId, from: me.id || me._id, to: activeDM._id, text: '', image: cloudRes.secure_url, createdAt: new Date().toISOString(), _sending: true };
+      setMessages(p => [...p, temp]);
+      const { data } = await api.post(`/api/messages/${activeDM._id}`, { image: cloudRes.secure_url }, { headers });
+      setMessages(p => p.map(m => m._id === tempId ? data : m));
+    } catch {
+      // silent
+    }
+    setImgUploading(false);
   };
 
   const sendRequest = async () => {
@@ -290,10 +321,28 @@ export default function VeloGram() {
                                 <span className="text-[#949ba4] text-xs">{timeStr(msg.createdAt)}</span>
                               </div>
                             )}
-                            <p className={`text-sm leading-relaxed break-words ${msg._failed ? 'text-red-400' : msg._sending ? 'text-[#dbdee1] opacity-60' : 'text-[#dbdee1]'}`}>
-                              {msg.text}
-                              {msg._failed && <span className="ml-2 text-xs text-red-400">(failed — retry)</span>}
-                            </p>
+                            {msg.text && (
+                              <p className={`text-sm leading-relaxed break-words ${msg._failed ? 'text-red-400' : msg._sending ? 'text-[#dbdee1] opacity-60' : 'text-[#dbdee1]'}`}>
+                                {msg.text}
+                                {msg._failed && <span className="ml-2 text-xs text-red-400">(failed)</span>}
+                              </p>
+                            )}
+                            {msg.image && (
+                              <img src={msg.image} alt="" className={`max-w-[280px] rounded-lg mt-1 cursor-pointer ${msg._sending ? 'opacity-60' : ''}`}
+                                onClick={() => window.open(msg.image, '_blank')} />
+                            )}
+                            {msg.sharedVideo && (
+                              <div className="mt-1 bg-[#2b2d31] border border-[#3f4147] rounded-lg overflow-hidden max-w-[280px] cursor-pointer hover:border-[#5865f2] transition"
+                                onClick={() => navigate(`/watch/${msg.sharedVideo._id || msg.sharedVideo}`)}>
+                                {msg.sharedVideo.thumbnail
+                                  ? <img src={mediaUrl(msg.sharedVideo.thumbnail)} className="w-full h-36 object-cover" />
+                                  : <div className="w-full h-36 bg-zinc-800 flex items-center justify-center"><svg className="w-8 h-8 text-zinc-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>}
+                                <div className="px-3 py-2">
+                                  <p className="text-white text-xs font-medium line-clamp-1">{msg.sharedVideo.title}</p>
+                                  <p className="text-[#949ba4] text-[11px]">@{msg.sharedVideo.uploader?.username} · {msg.sharedVideo.isShort ? 'Short' : 'Video'}</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -306,7 +355,14 @@ export default function VeloGram() {
 
             {/* Input */}
             <div className="px-4 pb-6 pt-2 flex-shrink-0">
-              <div className="bg-[#383a40] rounded-lg flex items-center px-4 gap-3">
+              <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && sendImage(e.target.files[0])} />
+              <div className="bg-[#383a40] rounded-lg flex items-center px-2 gap-1">
+                <button onClick={() => imgInputRef.current?.click()} disabled={imgUploading}
+                  className="text-gray-400 hover:text-white disabled:opacity-30 transition p-2 flex-shrink-0" title="Send image">
+                  {imgUploading
+                    ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                </button>
                 <input
                   value={msgInput}
                   onChange={e => setMsgInput(e.target.value)}
@@ -315,7 +371,7 @@ export default function VeloGram() {
                   className="flex-1 bg-transparent text-white text-sm py-3 focus:outline-none placeholder-[#6d6f78]"
                 />
                 <button onClick={sendMessage} disabled={!msgInput.trim()}
-                  className="text-gray-400 hover:text-white disabled:opacity-30 transition p-1">
+                  className="text-gray-400 hover:text-white disabled:opacity-30 transition p-2 flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
