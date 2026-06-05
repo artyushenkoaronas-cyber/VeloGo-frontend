@@ -108,7 +108,12 @@ export default function VeloGram() {
       setAddInput('');
       api.get('/api/friends/sent', { headers }).then(r => setSent(r.data || [])).catch(() => {});
     } catch (err) {
-      setAddMsg({ text: err.response?.data?.message || 'Error', ok: false });
+      const msg = err.response?.data?.message || 'Error';
+      if (err.response?.status === 401) {
+        setAddMsg({ text: 'Session expired — please log out and log in again', ok: false, expired: true });
+      } else {
+        setAddMsg({ text: msg, ok: false });
+      }
     }
     setSending(false);
   };
@@ -357,7 +362,17 @@ export default function VeloGram() {
                         {sending ? 'Sending...' : 'Send Friend Request'}
                       </button>
                     </div>
-                    {addMsg.text && <p className={`mt-2 text-sm ${addMsg.ok ? 'text-[#248046]' : 'text-red-400'}`}>{addMsg.text}</p>}
+                    {addMsg.text && (
+                      <div className="mt-2 flex items-center gap-3 flex-wrap">
+                        <p className={`text-sm ${addMsg.ok ? 'text-[#248046]' : 'text-red-400'}`}>{addMsg.text}</p>
+                        {addMsg.expired && (
+                          <button onClick={() => { localStorage.removeItem('velogo_token'); localStorage.removeItem('velogo_user'); navigate('/login'); }}
+                            className="bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs px-3 py-1.5 rounded transition font-medium">
+                            Log in again
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {sent.length > 0 && (
                       <div className="mt-8">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Sent — {sent.length}</p>
