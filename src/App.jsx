@@ -28,6 +28,7 @@ import Shorts from './pages/Shorts';
 import Setup from './pages/Setup';
 import VeloGram from './pages/VeloGram';
 import Subscriptions from './pages/Subscriptions';
+import Remix from './pages/Remix';
 
 
 const PrivateRoute = ({ children }) => {
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/shorts" element={<PrivateRoute><Shorts /></PrivateRoute>} />
         <Route path="/velogram" element={<PrivateRoute><VeloGram /></PrivateRoute>} />
         <Route path="/subscriptions" element={<PrivateRoute><Subscriptions /></PrivateRoute>} />
+        <Route path="/remix/:id" element={<PrivateRoute><Remix /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>

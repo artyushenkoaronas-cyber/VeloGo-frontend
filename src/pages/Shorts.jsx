@@ -262,6 +262,14 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           </button>
         </div>
 
+        {/* Remix badge */}
+        {short.remixOf && (
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="bg-white/10 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20">
+              🔄 Remix of @{short.remixOf?.uploader?.username || 'creator'}
+            </span>
+          </div>
+        )}
         {/* Title */}
         <p className="text-white text-sm leading-snug mb-2">{short.title}</p>
 
@@ -308,14 +316,14 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           <span className="text-white text-xs">Share</span>
         </button>
 
-        {/* Loops */}
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center">
+        {/* Remix */}
+        <button onClick={() => navigate(`/remix/${short._id}`)} className="flex flex-col items-center gap-1">
+          <div className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
-          <span className="text-white text-xs">{loopCount}</span>
+          <span className="text-white text-xs">Remix</span>
         </button>
 
         {/* Mute */}
