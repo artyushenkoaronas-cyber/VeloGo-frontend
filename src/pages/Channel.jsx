@@ -512,6 +512,7 @@ export default function Channel() {
                         : <div className="w-full h-full bg-zinc-700" />}
                     </div>
                     <p className="text-white text-xs font-medium mt-1 line-clamp-2">{v.title}</p>
+                    <p className="text-gray-400 text-xs">{fv(v.views || 0)} views</p>
                     {/* Trim button */}
                     <button
                       onClick={e => { e.preventDefault(); e.stopPropagation(); setTrimShort(v); }}
