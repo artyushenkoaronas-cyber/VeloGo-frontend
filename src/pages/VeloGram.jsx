@@ -129,7 +129,7 @@ export default function VeloGram() {
     } catch {}
   };
 
-  const pendingCount = pending.length;
+  const pendingCount = pending.length + sent.length;
   const totalUnread = Object.values(unread).reduce((a, b) => a + b, 0);
 
   // Group messages by date
@@ -379,21 +379,21 @@ export default function VeloGram() {
                 )}
 
                 {tab === 'Pending' && (
-                  <div className="p-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Pending — {pending.length}</p>
-                    {pending.length === 0 ? (
-                      <div className="flex flex-col items-center py-20 gap-3">
-                        <p className="text-[#949ba4] text-sm font-semibold">No pending requests</p>
-                      </div>
-                    ) : pending.map(f => (
-                      <div key={f._id} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[#35373c] transition group">
-                        <Avatar user={f.requester} size={10} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-semibold truncate">{f.requester?.name}</p>
-                          <p className="text-gray-400 text-xs">Incoming Friend Request</p>
-                        </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                          <button onClick={() => respond(f._id, 'accept')} className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition">
+                  <div className="p-4 space-y-6">
+                    {/* Incoming */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Incoming — {pending.length}</p>
+                      {pending.length === 0
+                        ? <p className="text-[#949ba4] text-sm px-2">No incoming requests</p>
+                        : pending.map(f => (
+                        <div key={f._id} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[#35373c] transition group">
+                          <Avatar user={f.requester} size={10} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-semibold truncate">{f.requester?.name}</p>
+                            <p className="text-gray-400 text-xs">@{f.requester?.username} · Incoming</p>
+                          </div>
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <button onClick={() => respond(f._id, 'accept')} className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                           </button>
                           <button onClick={() => respond(f._id, 'decline')} className="p-2 hover:bg-red-500/20 text-red-400 rounded-full transition">
@@ -402,6 +402,26 @@ export default function VeloGram() {
                         </div>
                       </div>
                     ))}
+                    </div>
+
+                    {/* Outgoing / Sent */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Sent — {sent.length}</p>
+                      {sent.length === 0
+                        ? <p className="text-[#949ba4] text-sm px-2">No sent requests</p>
+                        : sent.map(f => (
+                          <div key={f._id} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[#35373c] transition group">
+                            <Avatar user={f.recipient} size={10} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-sm font-semibold truncate">{f.recipient?.name}</p>
+                              <p className="text-gray-400 text-xs">@{f.recipient?.username} · Outgoing</p>
+                            </div>
+                            <button onClick={() => removeFriend(f._id)} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/20 text-red-400 rounded-full transition" title="Cancel">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
 
