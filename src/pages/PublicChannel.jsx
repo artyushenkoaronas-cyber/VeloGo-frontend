@@ -240,16 +240,29 @@ const { username } = useParams();
               {playlists.map(pl => (
                 <PlaylistRow key={pl._id} playlist={pl} navigate={navigate} />
               ))}
-              {videos.length > 0 && (
+              {videos.filter(v => v.isShort).length > 0 && (
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-white font-semibold text-base">Videos</h2>
+                  <h2 className="text-white font-semibold text-base mb-4">Shorts</h2>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {videos.filter(v => v.isShort).map(v => (
+                      <div key={v._id} className="flex-shrink-0 w-32 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
+                        <div className="w-32 aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 relative">
+                          {v.thumbnail
+                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                            : <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-zinc-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z" /></svg>
+                              </div>}
+                        </div>
+                        <p className="text-white text-xs font-medium mt-1 line-clamp-2 leading-snug">{v.title}</p>
+                        <p className="text-gray-400 text-xs">{fv(v.views || 0)} views</p>
+                      </div>
+                    ))}
                   </div>
+                </div>
+              )}
+              {videos.filter(v => !v.isShort).length > 0 && (
+                <div>
+                  <h2 className="text-white font-semibold text-base mb-4">Videos</h2>
                   <HorizontalVideoRow videos={videos.filter(v => !v.isShort)} navigate={navigate} />
                 </div>
               )}
