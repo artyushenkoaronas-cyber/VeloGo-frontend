@@ -207,7 +207,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
     <div className="flex gap-3 group">
       <div className="relative flex-shrink-0">
         <button
-          onClick={() => c.author?.username && navigate(`/c/${c.author.username}`)}
+          onClick={() => c.author?.username && navigate(c.author?._id ? `/c/${c.author._id}` : `/c/${c.author?.username}`)}
           className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center overflow-hidden"
         >
           {authorAvatar
@@ -244,7 +244,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
         )}
         <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           <button
-            onClick={() => c.author?.username && navigate(`/c/${c.author.username}`)}
+            onClick={() => c.author?.username && navigate(c.author?._id ? `/c/${c.author._id}` : `/c/${c.author?.username}`)}
             className="flex items-center gap-1 hover:opacity-80 transition"
           >
             <span className="text-white text-sm font-medium">@{c.author?.username || c.author?.name}</span>
@@ -337,7 +337,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
               const rLikes = r.likes?.length || 0;
               return (
                 <div key={r._id} className="flex gap-2 group/reply">
-                  <button onClick={() => r.author?.username && navigate(`/c/${r.author.username}`)}
+                  <button onClick={() => r.author?.username && navigate(r.author?._id ? `/c/${r.author._id}` : `/c/${r.author?.username}`)}
                     className="w-7 h-7 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {rAvatar
                       ? <img src={rAvatar} className="w-full h-full object-cover" />
@@ -345,7 +345,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
                   </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <button onClick={() => r.author?.username && navigate(`/c/${r.author.username}`)}
+                      <button onClick={() => r.author?.username && navigate(r.author?._id ? `/c/${r.author._id}` : `/c/${r.author?.username}`)}
                         className="flex items-center gap-1 hover:opacity-80 transition">
                         <span className="text-white text-xs font-medium">@{r.author?.username || r.author?.name}</span>
                         {r.author?.isOfficialArtist && <OfficialArtistBadge size={11} />}

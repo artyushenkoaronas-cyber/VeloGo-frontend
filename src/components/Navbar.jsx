@@ -85,7 +85,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
         const videoSugg = data.slice(0, 5).map(v => ({ type: 'video', text: v.title, id: v._id }));
         const channelMap = {};
         data.forEach(v => {
-          if (v.uploader?.name && !channelMap[v.uploader._id]) channelMap[v.uploader._id] = { type: 'channel', text: v.uploader.name, username: v.uploader.username };
+          if (v.uploader?.name && !channelMap[v.uploader._id]) channelMap[v.uploader._id] = { type: 'channel', text: v.uploader.name, username: v.uploader.username, _id: v.uploader._id };
         });
         const channelSugg = Object.values(channelMap).slice(0, 3);
         setSuggestions([...videoSugg, ...channelSugg]);
@@ -151,7 +151,7 @@ export default function Navbar({ onMenuToggle, onUpload }) {
             <div className="absolute top-11 left-0 right-10 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl z-50 overflow-hidden py-2">
               {suggestions.map((s, i) => (
                 <button key={i} onClick={() => {
-                  if (s.type === 'channel' && s.username) { navigate(`/c/${s.username}`); setSearchFocused(false); }
+                  if (s.type === 'channel') { navigate(`/c/${s._id || s.username}`); setSearchFocused(false); }
                   else { handleSearchSubmit(s.text); }
                 }}
                   className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition text-left">

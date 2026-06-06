@@ -40,7 +40,8 @@ const { username } = useParams();
 
   const me = safeParseUser();
   const token = localStorage.getItem('velogo_token');
-  const isOwn = me.username && me.username === username;
+  const myId = me.id || me._id || '';
+  const isOwn = (myId && myId === username) || (me.username && me.username === username);
 
   useEffect(() => {
     if (isOwn) { navigate('/channel'); return; }

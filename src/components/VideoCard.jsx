@@ -28,7 +28,7 @@ export default function VideoCard({ video }) {
 
   const goChannel = (e) => {
     e.stopPropagation();
-    const target = video.uploader?.username ? `/c/${video.uploader.username}` : video.uploader?._id ? `/c/${video.uploader._id}` : null;
+    const target = video.uploader?._id ? `/c/${video.uploader._id}` : video.uploader?.username ? `/c/${video.uploader.username}` : null;
     if (target) navigate(target);
   };
 
