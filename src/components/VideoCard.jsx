@@ -63,8 +63,8 @@ export default function VideoCard({ video }) {
         <div className="flex-1 min-w-0">
           <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug mb-1">{video.title}</h3>
           <div className="flex items-center gap-1 min-w-0">
-            <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition min-w-0 max-w-full">
-              <span className="text-gray-400 text-xs truncate max-w-[120px]">{video.uploader?.name}</span>
+            <button onClick={goChannel} className="flex items-center gap-1 hover:text-white transition min-w-0 overflow-hidden max-w-[160px]">
+              <span className="text-gray-400 text-xs truncate">{video.uploader?.name}</span>
               {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
               {video.uploader?.isVerified && <VerifiedBadge size={13} full />}
             </button>
