@@ -248,7 +248,7 @@ const { username } = useParams();
                   <h2 className="text-white font-semibold text-base mb-4">Shorts</h2>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {videos.filter(v => v.isShort).map(v => (
-                      <div key={v._id} className="flex-shrink-0 w-32 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
+                      <div key={v._id} className="flex-shrink-0 w-32 cursor-pointer group" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                         <div className="w-32 aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 relative">
                           {v.thumbnail
                             ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
@@ -343,7 +343,7 @@ const { username } = useParams();
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
                   {sorted.map(v => (
-                    <div key={v._id} className="flex flex-col gap-1 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
+                    <div key={v._id} className="flex flex-col gap-1 cursor-pointer group" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                       <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900">
                         {v.thumbnail
                           ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />

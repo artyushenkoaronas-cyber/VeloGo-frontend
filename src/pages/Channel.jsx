@@ -393,7 +393,7 @@ export default function Channel() {
                   <h2 className="text-white text-lg font-semibold mb-4">Shorts</h2>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {shorts.map(v => (
-                      <div key={v._id} className="relative flex-shrink-0 w-36 group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
+                      <div key={v._id} className="relative flex-shrink-0 w-36 group/card cursor-pointer" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                         <div className="w-36 h-64 bg-zinc-800 rounded-xl overflow-hidden">
                           {v.thumbnail
                             ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
@@ -505,7 +505,7 @@ export default function Channel() {
             ) : (
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pb-10">
                 {shorts.map(v => (
-                  <div key={v._id} className="relative group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
+                  <div key={v._id} className="relative group/card cursor-pointer" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                     <div className="w-full aspect-[9/16] bg-zinc-800 rounded-xl overflow-hidden">
                       {v.thumbnail
                         ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />

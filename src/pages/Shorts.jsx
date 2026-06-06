@@ -1,6 +1,6 @@
 import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
@@ -14,6 +14,8 @@ function fv(n) {
 
 export default function Shorts() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const startId = searchParams.get('id');
   const [shorts, setShorts] = useState([]);
   const [current, setCurrent] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -34,7 +36,15 @@ export default function Shorts() {
       setCurrent(idx);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-    // fire once immediately in case we're already scrolled
+    // If startId given, scroll to that short
+    if (startId) {
+      const idx = shorts.findIndex(s => s._id === startId);
+      if (idx > 0) {
+        const itemH = el.clientHeight || window.innerHeight;
+        el.scrollTop = idx * itemH;
+        setCurrent(idx);
+      }
+    }
     onScroll();
     return () => el.removeEventListener('scroll', onScroll);
   }, [shorts.length]);
