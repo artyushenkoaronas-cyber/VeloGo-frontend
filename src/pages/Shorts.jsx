@@ -132,6 +132,41 @@ export default function Shorts() {
   );
 }
 
+function CommentRow({ c, token, me, shortId }) {
+  const [likes, setLikes] = useState(c.likes?.length || 0);
+  const [liked, setLiked] = useState(c.likes?.includes(me.id));
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const likeComment = async () => {
+    if (!token) return;
+    try {
+      const { data } = await api.post(`/api/comments/${c._id}/like`, {}, { headers });
+      setLikes(data.likes);
+      setLiked(data.liked);
+    } catch {}
+  };
+
+  return (
+    <div className="flex gap-3">
+      <div className="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
+        {c.author?.avatar
+          ? <img src={mediaUrl(c.author.avatar)} className="w-full h-full object-cover" />
+          : <span className="text-white text-xs font-bold">{c.author?.name?.[0]?.toUpperCase()}</span>}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white text-xs font-medium">@{c.author?.username || c.author?.name}</p>
+        <p className="text-gray-300 text-sm mt-0.5">{c.text}</p>
+      </div>
+      <button onClick={likeComment} className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
+        <svg className={`w-4 h-4 ${liked ? 'text-red-400' : 'text-gray-400'}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+        </svg>
+        <span className="text-gray-400 text-[10px]">{likes > 0 ? fv(likes) : ''}</span>
+      </button>
+    </div>
+  );
+}
+
 function ShortItem({ short, isActive, token, me, navigate }) {
   const videoRef = useRef(null);
   const [liked, setLiked] = useState(short.likes?.includes(me.id));
@@ -444,17 +479,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
             </div>
             <div className="overflow-y-auto flex-1 px-4 py-3 space-y-4">
               {comments.map(c => (
-                <div key={c._id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                    {c.author?.avatar
-                      ? <img src={mediaUrl(c.author.avatar)} className="w-full h-full object-cover" />
-                      : <span className="text-white text-xs font-bold">{c.author?.name?.[0]?.toUpperCase()}</span>}
-                  </div>
-                  <div>
-                    <p className="text-white text-xs font-medium">@{c.author?.username || c.author?.name}</p>
-                    <p className="text-gray-300 text-sm mt-0.5">{c.text}</p>
-                  </div>
-                </div>
+                <CommentRow key={c._id} c={c} token={token} me={me} shortId={short._id} />
               ))}
             </div>
             <div className="px-4 py-3 border-t border-zinc-800 flex gap-2">
