@@ -34,8 +34,10 @@ export default function Shorts() {
       setCurrent(idx);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
+    // fire once immediately in case we're already scrolled
+    onScroll();
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [shorts.length]);
 
   if (shorts.length === 0) return (
     <div className="fixed inset-0 bg-black flex items-center justify-center flex-col gap-4">
