@@ -230,7 +230,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
       <div className="absolute bottom-0 left-0 right-0 max-w-[400px] mx-auto px-4 pb-6 z-10">
         {/* Channel info */}
         <div className="flex items-center gap-2 mb-2">
-          <button onClick={() => navigate(`/c/${short.uploader?._id || short.uploader?.username}`)}>
+          <button onClick={() => navigate(`/c/${short.uploader?.channelToken || short.uploader?._id}`)}>
             <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center overflow-hidden border-2 border-white">
               {uploaderAvatar
                 ? <img src={uploaderAvatar} className="w-full h-full object-cover" />
@@ -239,7 +239,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           </button>
           <div className="flex items-center gap-1 flex-wrap">
             <button
-              onClick={() => navigate(`/c/${short.uploader?._id || short.uploader?.username}`)}
+              onClick={() => navigate(`/c/${short.uploader?.channelToken || short.uploader?._id}`)}
               className="flex items-center gap-1 hover:opacity-80 transition"
             >
               <span className="text-white text-sm font-semibold">@{short.uploader?.username || short.uploader?.name}</span>
@@ -251,7 +251,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
                 <span className="text-gray-300 text-xs">and</span>
                 {short.collaborators.map((c, i) => (
                   <span key={c._id} className="flex items-center gap-0.5">
-                    <button onClick={() => navigate(`/c/${c._id || c.username}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
+                    <button onClick={() => navigate(`/c/${c.channelToken || c._id}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
                     {c.isVerified && <VerifiedBadge size={13} full />}
                     {i < short.collaborators.length - 1 && <span className="text-gray-300 text-xs">,</span>}

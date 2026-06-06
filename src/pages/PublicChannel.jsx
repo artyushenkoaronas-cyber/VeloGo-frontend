@@ -41,7 +41,8 @@ const { username } = useParams();
   const me = safeParseUser();
   const token = localStorage.getItem('velogo_token');
   const myId = me.id || me._id || '';
-  const isOwn = (myId && myId === username) || (me.username && me.username === username);
+  const myChannelToken = me.channelToken || '';
+  const isOwn = (myId && myId === username) || (me.username && me.username === username) || (myChannelToken && myChannelToken === username);
 
   useEffect(() => {
     if (isOwn) { navigate('/channel'); return; }
@@ -52,8 +53,9 @@ const { username } = useParams();
 
   const loadChannel = async () => {
     try {
-      const isId = /^[a-f\d]{24}$/i.test(username);
-      const { data } = await api.get(`/api/users/${isId ? username : `@${username}`}`);
+      const isMongoId = /^[a-f\d]{24}$/i.test(username);
+      const isToken = /^[a-f\d]{20}$/i.test(username);
+      const { data } = await api.get(`/api/users/${(isMongoId || isToken) ? username : `@${username}`}`);
       setChannel(data);
       setSubCount(data.subscribers || 0);
 
