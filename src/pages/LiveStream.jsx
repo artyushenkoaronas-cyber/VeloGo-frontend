@@ -266,10 +266,10 @@ export default function LiveStream() {
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
             {chat.map((msg, i) => {
               const isOwner = msg.user?.username === me.username;
-              const nameColor = msg.user?.isFounder
-                ? 'text-yellow-400'
-                : isOwner
-                  ? 'text-blue-400'
+              const nameColor = isOwner
+                ? 'text-blue-400'
+                : msg.user?.isFounder
+                  ? 'text-yellow-400'
                   : 'text-white';
               return (
                 <div key={msg.id || i} className="text-xs leading-5 break-words">
