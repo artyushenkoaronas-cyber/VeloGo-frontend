@@ -1,4 +1,4 @@
-import { mediaUrl } from '../utils/mediaUrl';
+﻿import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
@@ -133,6 +133,16 @@ export default function Shorts() {
   );
 }
 
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  if (s < 2592000) return `${Math.floor(s / 86400)}d ago`;
+  if (s < 31536000) return `${Math.floor(s / 2592000)} months ago`;
+  return `${Math.floor(s / 31536000)}y ago`;
+}
+
 function CommentRow({ c, token, me, shortId }) {
   const [likes, setLikes] = useState(c.likes?.length || 0);
   const [liked, setLiked] = useState(c.likes?.includes(me.id));
@@ -148,22 +158,30 @@ function CommentRow({ c, token, me, shortId }) {
   };
 
   return (
-    <div className="flex gap-3">
-      <div className="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
+    <div className="flex gap-3 py-3 border-b border-zinc-800/50 last:border-0">
+      <div className="w-9 h-9 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
         {c.author?.avatar
           ? <img src={mediaUrl(c.author.avatar)} className="w-full h-full object-cover" />
           : <span className="text-white text-xs font-bold">{c.author?.name?.[0]?.toUpperCase()}</span>}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white text-xs font-medium">@{c.author?.username || c.author?.name}</p>
-        <p className="text-gray-300 text-sm mt-0.5">{c.text}</p>
+        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+          {c.author?.isFounder && <FounderBadge size={13} />}
+          <span className="text-white text-xs font-semibold">@{c.author?.username || c.author?.name}</span>
+          {c.author?.isVerified && <VerifiedBadge size={11} full />}
+          <span className="text-zinc-500 text-xs">{timeAgo(c.createdAt)}</span>
+        </div>
+        <p className="text-gray-200 text-sm leading-snug">{c.text}</p>
+        <div className="flex items-center gap-3 mt-1.5">
+          <button onClick={likeComment} className="flex items-center gap-1 text-gray-400 hover:text-white transition">
+            <svg className={`w-4 h-4 ${liked ? 'text-red-400' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+            </svg>
+            <span className="text-xs">{likes > 0 ? likes : ''}</span>
+          </button>
+          <button className="text-gray-400 hover:text-white text-xs transition">Reply</button>
+        </div>
       </div>
-      <button onClick={likeComment} className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
-        <svg className={`w-4 h-4 ${liked ? 'text-red-400' : 'text-gray-400'}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-        </svg>
-        <span className="text-gray-400 text-[10px]">{likes > 0 ? fv(likes) : ''}</span>
-      </button>
     </div>
   );
 }
@@ -297,7 +315,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
       <div className="absolute bottom-0 left-0 right-0 max-w-[400px] mx-auto px-4 pb-6 z-10">
         {/* Channel info */}
         <div className="flex items-center gap-2 mb-2">
-          <button onClick={() => navigate(`/c/${short.uploader?.channelToken || short.uploader?._id}`)}>
+          <button onClick={() => navigate(`/c/${short.uploader?.username}`)}>
             <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center overflow-hidden border-2 border-white">
               {uploaderAvatar
                 ? <img src={uploaderAvatar} className="w-full h-full object-cover" />
@@ -306,7 +324,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           </button>
           <div className="flex items-center gap-1 flex-wrap">
             <button
-              onClick={() => navigate(`/c/${short.uploader?.channelToken || short.uploader?._id}`)}
+              onClick={() => navigate(`/c/${short.uploader?.username}`)}
               className="flex items-center gap-1 hover:opacity-80 transition"
             >
               {short.uploader?.isFounder && <FounderBadge size={14} />}
@@ -319,7 +337,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
                 <span className="text-gray-300 text-xs">and</span>
                 {short.collaborators.map((c, i) => (
                   <span key={c._id} className="flex items-center gap-0.5">
-                    <button onClick={() => navigate(`/c/${c.channelToken || c._id}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
+                    <button onClick={() => navigate(`/c/${c.username}`)} className="text-white text-sm font-semibold hover:opacity-80 transition">@{c.username || c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
                     {c.isVerified && <VerifiedBadge size={13} full />}
                     {i < short.collaborators.length - 1 && <span className="text-gray-300 text-xs">,</span>}
@@ -337,7 +355,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
         {short.remixOf && (
           <div className="flex items-center gap-1.5 mb-1">
             <span className="bg-white/10 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20">
-              🔄 Remix of @{short.remixOf?.uploader?.username || 'creator'}
+              ðŸ”„ Remix of @{short.remixOf?.uploader?.username || 'creator'}
             </span>
           </div>
         )}
@@ -413,7 +431,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
           <span className="text-white text-xs">{muted ? 'Unmute' : 'Mute'}</span>
         </button>
 
-        {/* Collab — owner only */}
+        {/* Collab â€” owner only */}
         {isOwner && (
           <button onClick={() => { setShowCollab(true); setCollabMsg(''); }} className="flex flex-col items-center gap-1">
             <div className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
@@ -487,38 +505,65 @@ function ShortItem({ short, isActive, token, me, navigate }) {
         </div>
       )}
 
-      {/* Comments drawer */}
+      {/* Comments panel — right side, YouTube Shorts style */}
       {showComments && (
-        <div className="absolute inset-0 z-20 flex items-end justify-center max-w-[400px] mx-auto">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowComments(false)} />
-          <div className="relative bg-zinc-900 rounded-t-2xl w-full max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-              <p className="text-white font-semibold text-sm">{comments.length} Comments</p>
-              <button onClick={() => setShowComments(false)} className="text-gray-400 hover:text-white transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 z-30 flex pointer-events-none">
+          {/* Click outside to close */}
+          <div className="flex-1 pointer-events-auto" onClick={() => setShowComments(false)} />
+          {/* Panel */}
+          <div className="w-[360px] h-full bg-[#212121] flex flex-col pointer-events-auto shadow-2xl border-l border-zinc-700/50 animate-slide-in-right">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-700/50">
+              <div className="flex items-center gap-3">
+                <h3 className="text-white font-semibold text-base">Comments</h3>
+                <span className="text-zinc-400 text-sm">{fv(comments.length)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="text-zinc-400 hover:text-white transition p-1">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                  </svg>
+                </button>
+                <button onClick={() => setShowComments(false)} className="text-zinc-400 hover:text-white transition p-1">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="overflow-y-auto flex-1 px-4 py-3 space-y-4">
+
+            {/* Comments list */}
+            <div className="flex-1 overflow-y-auto px-4 py-2">
+              {comments.length === 0 && (
+                <p className="text-zinc-500 text-sm text-center mt-8">No comments yet. Be the first!</p>
+              )}
               {comments.map(c => (
                 <CommentRow key={c._id} c={c} token={token} me={me} shortId={short._id} />
               ))}
             </div>
-            <div className="px-4 py-3 border-t border-zinc-800 flex gap-2">
+
+            {/* Comment input */}
+            <div className="px-4 py-3 border-t border-zinc-700/50 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                {me.avatar
+                  ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" />
+                  : <span className="text-white text-xs font-bold">{me.name?.[0]?.toUpperCase() || '?'}</span>}
+              </div>
               <input
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendComment()}
                 placeholder="Add a comment..."
-                className="flex-1 bg-zinc-800 text-white text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+                className="flex-1 bg-[#2d2d2d] text-white text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder-zinc-500"
               />
               <button
                 onClick={sendComment}
                 disabled={!commentText.trim()}
-                className="bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-sm px-4 py-2 rounded-full transition"
+                className="text-zinc-400 hover:text-white disabled:opacity-30 transition p-1"
               >
-                Post
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -527,3 +572,6 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     </div>
   );
 }
+
+
+

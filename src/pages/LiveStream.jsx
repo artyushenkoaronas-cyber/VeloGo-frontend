@@ -4,6 +4,8 @@ import { io } from 'socket.io-client';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { mediaUrl } from '../utils/mediaUrl';
+import FounderBadge from '../components/FounderBadge';
+import VerifiedBadge from '../components/VerifiedBadge';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
 
@@ -37,15 +39,23 @@ export default function LiveStream() {
   useEffect(() => {
     api.get(`/api/lives/${id}`, { headers }).then(r => {
       setStream(r.data);
+      // Restore isLive state from DB (in case of page refresh)
+      if (r.data.isLive) setIsLive(true);
       setLoading(false);
     }).catch(() => { navigate('/channel'); });
 
-    const socket = io(BACKEND, { transports: ['websocket', 'polling'] });
+    // Use polling first — more reliable through proxies/firewalls
+    const socket = io(BACKEND, {
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 30000,
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => {
       setSocketConnected(true);
-      socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar } });
+      socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder } });
     });
     socket.on('disconnect', () => setSocketConnected(false));
     socket.on('live:viewers', count => setViewers(count));
@@ -89,9 +99,7 @@ export default function LiveStream() {
     await api.post(`/api/lives/${id}/start`, {}, { headers });
     setIsLive(true);
 
-    // Pick best supported MIME type
     const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
-
     const recorder = new MediaRecorder(mediaStreamRef.current, { mimeType, videoBitsPerSecond: 1500000 });
     recorderRef.current = recorder;
 
@@ -101,8 +109,7 @@ export default function LiveStream() {
         socketRef.current.emit('live:chunk', { streamId: id, chunk: buf });
       }
     };
-
-    recorder.start(1000); // send 1-second chunks
+    recorder.start(1000);
   };
 
   const endStream = async (saveToChannel) => {
@@ -118,11 +125,11 @@ export default function LiveStream() {
 
   const sendChat = (e) => {
     e.preventDefault();
-    if (!chatMsg.trim()) return;
-    socketRef.current?.emit('live:chat', {
+    if (!chatMsg.trim() || !socketRef.current?.connected) return;
+    socketRef.current.emit('live:chat', {
       streamId: id,
       message: chatMsg.trim(),
-      user: { name: me.name, username: me.username, avatar: me.avatar },
+      user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder, isVerified: me.isVerified },
     });
     setChatMsg('');
   };
@@ -137,6 +144,7 @@ export default function LiveStream() {
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
       <Navbar onMenuToggle={() => {}} />
 
+      {/* End stream modal */}
       {showEndModal && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className="bg-[#212121] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
@@ -158,6 +166,7 @@ export default function LiveStream() {
       )}
 
       <div className="pt-14 flex flex-1 overflow-hidden">
+        {/* Video + controls */}
         <div className="flex-1 flex flex-col p-4 gap-4">
           <div className="relative w-full bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '60vh' }}>
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" />
@@ -206,17 +215,26 @@ export default function LiveStream() {
                 {ending ? 'Ending...' : 'End stream'}
               </button>
             )}
+            {/* Always show End button if stream is live in DB */}
+            {!isLive && stream?.isLive && (
+              <button onClick={() => setShowEndModal(true)} disabled={ending}
+                className="flex items-center gap-2 bg-red-800 hover:bg-red-700 text-white px-6 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50">
+                {ending ? 'Ending...' : 'End stream (active)'}
+              </button>
+            )}
           </div>
 
           {stream && (
             <div className="bg-zinc-900 rounded-xl p-4 flex gap-4 items-start">
               <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {me.avatar ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" />
+                {me.avatar ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" alt="" />
                   : <span className="text-white font-bold text-lg">{me.name?.[0]?.toUpperCase()}</span>}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  {me.isFounder && <FounderBadge size={16} />}
                   <span className="text-white font-semibold text-sm">{me.name}</span>
+                  {me.isVerified && <VerifiedBadge size={14} full />}
                   <span className="text-zinc-500 text-xs">@{me.username}</span>
                 </div>
                 <h2 className="text-white font-medium">{stream.title}</h2>
@@ -232,21 +250,29 @@ export default function LiveStream() {
           )}
         </div>
 
+        {/* Live chat */}
         <div className="w-80 flex flex-col border-l border-zinc-800 bg-[#0f0f0f]">
           <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
             <h3 className="text-white font-semibold text-sm">Live chat</h3>
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+            {!socketConnected && <span className="text-yellow-400 text-xs">Connecting...</span>}
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
-            {chat.map(msg => (
-              <div key={msg.id} className="flex gap-2 items-start">
-                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
-                  {msg.user?.name?.[0]?.toUpperCase() || '?'}
+            {chat.map((msg, i) => (
+              <div key={msg.id || i} className="flex gap-2 items-start">
+                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 overflow-hidden">
+                  {msg.user?.avatar
+                    ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
+                    : msg.user?.name?.[0]?.toUpperCase() || '?'}
                 </div>
-                <div>
-                  <span className="text-blue-400 text-xs font-medium">{msg.user?.name || msg.user?.username} </span>
-                  <span className="text-white text-xs">{msg.message}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {msg.user?.isFounder && <FounderBadge size={13} />}
+                    <span className="text-blue-400 text-xs font-medium">{msg.user?.name || msg.user?.username}</span>
+                    {msg.user?.isVerified && <VerifiedBadge size={11} full />}
+                  </div>
+                  <span className="text-white text-xs break-words">{msg.message}</span>
                 </div>
               </div>
             ))}
@@ -254,9 +280,11 @@ export default function LiveStream() {
           </div>
           {stream?.chatMode !== 'none' && (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
-              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder="Chat..." maxLength={200}
-                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500" />
-              <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition">
+              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder={socketConnected ? 'Chat...' : 'Connecting...'} maxLength={200}
+                disabled={!socketConnected}
+                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500 disabled:opacity-50" />
+              <button type="submit" disabled={!socketConnected}
+                className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition disabled:opacity-50">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>
               </button>
             </form>

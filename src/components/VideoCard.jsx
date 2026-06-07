@@ -1,4 +1,4 @@
-import { mediaUrl } from '../utils/mediaUrl';
+﻿import { mediaUrl } from '../utils/mediaUrl';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
@@ -30,7 +30,7 @@ export default function VideoCard({ video }) {
 
   const goChannel = (e) => {
     e.stopPropagation();
-    const target = video.uploader?.channelToken ? `/c/${video.uploader.channelToken}` : video.uploader?._id ? `/c/${video.uploader._id}` : null;
+    const target = video.uploader?.username ? `/c/${video.uploader.username}` : null;
     if (target) navigate(target);
   };
 
@@ -73,7 +73,7 @@ export default function VideoCard({ video }) {
                 <span className="text-gray-500 text-xs flex-shrink-0">and</span>
                 {video.collaborators.slice(0, 1).map(c => (
                   <span key={c._id} className="flex items-center gap-0.5 min-w-0">
-                    <button onClick={e => { e.stopPropagation(); navigate(`/c/${c.channelToken || c._id}`); }}
+                    <button onClick={e => { e.stopPropagation(); navigate(`/c/${c.username}`); }}
                       className="text-gray-400 text-xs hover:text-white transition truncate max-w-[80px]">{c.name}</button>
                     {c.isOfficialArtist && <OfficialArtistBadge size={13} />}
                     {c.isVerified && <VerifiedBadge size={13} full />}
@@ -91,3 +91,6 @@ export default function VideoCard({ video }) {
     </div>
   );
 }
+
+
+

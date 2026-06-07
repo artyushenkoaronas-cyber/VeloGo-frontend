@@ -2,16 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import { mediaUrl } from '../utils/mediaUrl';
 import FounderBadge from '../components/FounderBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
-const MIME = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => {
-  try { return MediaSource.isTypeSupported(m); } catch { return false; }
-}) || 'video/webm';
 
 function safeUser() {
   try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; }
@@ -20,105 +16,109 @@ function safeUser() {
 export default function WatchLive() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stream, setStream] = useState(null);
-  const [ended, setEnded] = useState(false);
+  const [streamer, setStreamer] = useState(null);
   const [viewers, setViewers] = useState(0);
   const [chat, setChat] = useState([]);
   const [chatMsg, setChatMsg] = useState('');
   const [loading, setLoading] = useState(true);
-  const [connected, setConnected] = useState(false);
-  const [hasVideo, setHasVideo] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const videoRef = useRef(null);
   const socketRef = useRef(null);
-  const msRef = useRef(null);      // MediaSource
-  const sbRef = useRef(null);      // SourceBuffer
-  const queueRef = useRef([]);     // pending chunks
-  const appendingRef = useRef(false);
+  const msRef = useRef(null);
+  const sbRef = useRef(null);
+  const queueRef = useRef([]);
+  const drainingRef = useRef(false);
   const chatEndRef = useRef(null);
 
-  const token = localStorage.getItem('velogo_token');
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const me = safeUser();
 
-  // Setup MediaSource
-  const setupMediaSource = () => {
-    if (msRef.current) return;
-    const ms = new MediaSource();
-    msRef.current = ms;
-    videoRef.current.src = URL.createObjectURL(ms);
-
-    ms.addEventListener('sourceopen', () => {
-      try {
-        const sb = ms.addSourceBuffer(MIME);
-        sbRef.current = sb;
-        sb.addEventListener('updateend', () => {
-          appendingRef.current = false;
-          drainQueue();
-        });
-      } catch (e) {
-        console.warn('MediaSource error:', e);
-      }
-    });
-  };
-
   const drainQueue = () => {
-    if (appendingRef.current || !sbRef.current || queueRef.current.length === 0) return;
-    if (sbRef.current.updating) return;
+    if (drainingRef.current) return;
+    if (!sbRef.current || sbRef.current.updating) return;
+    if (queueRef.current.length === 0) { drainingRef.current = false; return; }
+    drainingRef.current = true;
+    const buf = queueRef.current.shift();
     try {
-      const chunk = queueRef.current.shift();
-      appendingRef.current = true;
-      sbRef.current.appendBuffer(chunk);
-      // Auto-play on first chunk
-      if (!hasVideo) {
-        setHasVideo(true);
-        videoRef.current?.play().catch(() => {});
-      }
-      // Keep buffer lean: remove old data
-      if (sbRef.current.buffered.length > 0) {
-        const end = sbRef.current.buffered.end(sbRef.current.buffered.length - 1);
-        if (end > 30) {
-          try { sbRef.current.remove(0, end - 20); } catch {}
-        }
-      }
+      sbRef.current.appendBuffer(buf);
     } catch (e) {
-      appendingRef.current = false;
+      console.warn('appendBuffer error', e);
+      drainingRef.current = false;
     }
   };
 
   useEffect(() => {
     api.get(`/api/lives/${id}`).then(r => {
-      setStream(r.data);
+      const data = r.data;
+      setStream(data);
+      if (data.streamer) setStreamer(data.streamer);
       setLoading(false);
-    }).catch(() => navigate('/'));
+    }).catch(() => {
+      setLoading(false);
+      setEnded(true);
+    });
 
-    const socket = io(BACKEND, { transports: ['websocket', 'polling'] });
+    // Set up MediaSource for video playback
+    if (typeof MediaSource !== 'undefined') {
+      const ms = new MediaSource();
+      msRef.current = ms;
+      if (videoRef.current) {
+        videoRef.current.src = URL.createObjectURL(ms);
+      }
+      ms.addEventListener('sourceopen', () => {
+        const mimeType = 'video/webm;codecs=vp8,opus';
+        if (!MediaSource.isTypeSupported(mimeType)) return;
+        try {
+          const sb = ms.addSourceBuffer(mimeType);
+          sbRef.current = sb;
+          sb.addEventListener('updateend', () => {
+            drainingRef.current = false;
+            drainQueue();
+          });
+        } catch (e) {
+          console.warn('addSourceBuffer error', e);
+        }
+      });
+    }
+
+    // polling first — more reliable through proxies/firewalls
+    const socket = io(BACKEND, {
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 30000,
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      setConnected(true);
+      setSocketConnected(true);
       socket.emit('live:join', {
         streamId: id,
-        user: { name: me.name, username: me.username, avatar: me.avatar },
+        user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder },
       });
     });
-    socket.on('disconnect', () => setConnected(false));
 
-    socket.on('live:chat_history', msgs => setChat(msgs || []));
-    socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
+    socket.on('disconnect', () => setSocketConnected(false));
     socket.on('live:viewers', count => setViewers(count));
-    socket.on('live:ended', () => setEnded(true));
+    socket.on('live:chat_history', msgs => setChat(msgs));
+    socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
 
-    // Receive video chunk from streamer
     socket.on('live:chunk', (chunk) => {
-      if (!videoRef.current) return;
-      if (!msRef.current) setupMediaSource();
-      // chunk might be ArrayBuffer already
-      const buf = chunk instanceof ArrayBuffer ? chunk : new Uint8Array(chunk).buffer;
+      if (!sbRef.current) return;
+      let buf;
+      if (chunk instanceof ArrayBuffer) buf = chunk;
+      else if (chunk instanceof Uint8Array) buf = chunk.buffer;
+      else return;
       queueRef.current.push(buf);
       drainQueue();
+      if (videoRef.current && videoRef.current.paused && videoRef.current.readyState >= 2) {
+        videoRef.current.play().catch(() => {});
+      }
     });
+
+    socket.on('live:ended', () => setEnded(true));
 
     return () => {
       socket.disconnect();
@@ -138,7 +138,7 @@ export default function WatchLive() {
     socketRef.current.emit('live:chat', {
       streamId: id,
       message: chatMsg.trim(),
-      user: { name: me.name, username: me.username, avatar: me.avatar },
+      user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder, isVerified: me.isVerified },
     });
     setChatMsg('');
   };
@@ -149,105 +149,114 @@ export default function WatchLive() {
     </div>
   );
 
-  const streamer = stream?.streamer;
+  if (ended) return (
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
+      <Navbar onMenuToggle={() => {}} />
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        <div className="text-5xl">📴</div>
+        <h2 className="text-white text-xl font-semibold">Stream has ended</h2>
+        <p className="text-zinc-400 text-sm">This live stream is no longer available.</p>
+        <button onClick={() => navigate('/')} className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-full text-sm font-medium transition">
+          Go to Home
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
-      <Navbar onMenuToggle={() => setSidebarOpen(p => !p)} />
-      <Sidebar open={sidebarOpen} />
-      <div className={`pt-14 transition-all duration-200 flex ${sidebarOpen ? 'ml-60' : 'ml-16'}`}>
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
+      <Navbar onMenuToggle={() => {}} />
+
+      <div className="pt-14 flex flex-1 overflow-hidden">
         {/* Video + info */}
-        <div className="flex-1 flex flex-col">
-          <div className="relative w-full bg-black" style={{ aspectRatio: '16/9', maxHeight: '70vh' }}>
+        <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+          <div className="relative w-full bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '60vh' }}>
             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
-
-            {ended && (
-              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-3">
-                <p className="text-white text-xl font-semibold">Stream ended</p>
-                <button onClick={() => navigate('/')} className="bg-white text-black px-6 py-2 rounded-full text-sm font-semibold">Go home</button>
+            {/* Connecting overlay */}
+            {!socketConnected && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+                <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-white text-sm">Connecting...</p>
               </div>
             )}
-
-            {!ended && !hasVideo && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-400 text-sm">
-                  {connected ? (stream?.isLive ? 'Connecting to stream...' : 'Waiting for streamer to go live...') : 'Connecting...'}
-                </p>
-              </div>
-            )}
-
-            {!ended && stream?.isLive && (
-              <div className="absolute top-3 left-3 flex items-center gap-2">
-                <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
-                </span>
-                <span className="bg-black/60 text-white text-xs px-2 py-0.5 rounded">👁 {viewers}</span>
-              </div>
-            )}
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
+              </span>
+              <span className="bg-black/60 text-white text-xs px-2 py-0.5 rounded">👁 {viewers}</span>
+            </div>
           </div>
 
-          {/* Stream info */}
-          <div className="p-5 border-b border-zinc-800">
-            <h1 className="text-white text-xl font-bold">{stream?.title}</h1>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
-                onClick={() => navigate(`/c/${streamer?.channelToken || streamer?._id}`)}>
+          {stream && (
+            <div className="bg-zinc-900 rounded-xl p-4 flex gap-4 items-start">
+              <button
+                onClick={() => streamer?.username && navigate(`/c/${streamer.username}`)}
+                className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-red-500 transition"
+              >
                 {streamer?.avatar
-                  ? <img src={mediaUrl(streamer.avatar)} className="w-full h-full object-cover" />
-                  : <span className="text-white font-bold">{streamer?.name?.[0]?.toUpperCase()}</span>}
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
+                  ? <img src={mediaUrl(streamer.avatar)} className="w-full h-full object-cover" alt={streamer.name} />
+                  : <span className="text-white font-bold text-lg">{streamer?.name?.[0]?.toUpperCase() || '?'}</span>}
+              </button>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                   {streamer?.isFounder && <FounderBadge size={16} />}
-                  <span className="text-white font-medium text-sm cursor-pointer hover:underline"
-                    onClick={() => navigate(`/c/${streamer?.channelToken || streamer?._id}`)}>
-                    {streamer?.name}
-                  </span>
-                  {streamer?.isVerified && <VerifiedBadge size={14} />}
+                  <button
+                    onClick={() => streamer?.username && navigate(`/c/${streamer.username}`)}
+                    className="text-white font-semibold text-sm hover:underline"
+                  >
+                    {streamer?.name || 'Unknown'}
+                  </button>
+                  {streamer?.isVerified && <VerifiedBadge size={14} full />}
+                  {streamer?.username && <span className="text-zinc-500 text-xs">@{streamer.username}</span>}
                 </div>
-                <p className="text-zinc-500 text-xs">@{streamer?.username}</p>
+                <h2 className="text-white font-medium">{stream.title}</h2>
+                {stream.description && <p className="text-gray-400 text-sm mt-1">{stream.description}</p>}
+                <p className="text-zinc-500 text-xs mt-1">👁 {viewers} watching</p>
               </div>
             </div>
-            {stream?.description && <p className="text-gray-400 text-sm mt-3">{stream.description}</p>}
-          </div>
+          )}
         </div>
 
         {/* Live chat */}
-        <div className="w-80 flex flex-col border-l border-zinc-800 h-[calc(100vh-56px)] sticky top-14">
+        <div className="w-80 flex flex-col border-l border-zinc-800 bg-[#0f0f0f]">
           <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
             <h3 className="text-white font-semibold text-sm">Live chat</h3>
-            <span className="text-zinc-500 text-xs">· {viewers} watching</span>
-            <span className={`w-2 h-2 rounded-full ml-auto flex-shrink-0 ${connected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} title={connected ? 'Connected' : 'Connecting...'} />
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+            {!socketConnected && <span className="text-yellow-400 text-xs">Connecting...</span>}
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
-            {chat.length === 0 && !ended && (
-              <p className="text-zinc-600 text-xs text-center mt-4">Chat will appear here</p>
-            )}
+            {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
             {chat.map((msg, i) => (
               <div key={msg.id || i} className="flex gap-2 items-start">
-                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
-                  {msg.user?.name?.[0]?.toUpperCase() || '?'}
+                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 overflow-hidden">
+                  {msg.user?.avatar
+                    ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
+                    : msg.user?.name?.[0]?.toUpperCase() || '?'}
                 </div>
-                <div>
-                  <span className="text-blue-400 text-xs font-medium">{msg.user?.name || msg.user?.username} </span>
-                  <span className="text-white text-xs">{msg.message}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {msg.user?.isFounder && <FounderBadge size={13} />}
+                    <span className="text-blue-400 text-xs font-medium">{msg.user?.name || msg.user?.username}</span>
+                    {msg.user?.isVerified && <VerifiedBadge size={11} full />}
+                  </div>
+                  <span className="text-white text-xs break-words">{msg.message}</span>
                 </div>
               </div>
             ))}
             <div ref={chatEndRef} />
           </div>
-          {stream?.chatMode === 'none' ? (
-            <div className="p-3 border-t border-zinc-800 text-center text-zinc-600 text-xs">Chat is disabled</div>
-          ) : !me.id ? (
-            <div className="p-3 border-t border-zinc-800 text-center">
-              <button onClick={() => navigate('/login')} className="text-blue-400 text-xs hover:underline">Sign in to chat</button>
-            </div>
-          ) : (
+          {stream?.chatMode !== 'none' && (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
-              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder="Chat..." maxLength={200}
-                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500" />
-              <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition">
+              <input
+                value={chatMsg}
+                onChange={e => setChatMsg(e.target.value)}
+                placeholder={socketConnected ? 'Chat...' : 'Connecting...'}
+                maxLength={200}
+                disabled={!socketConnected}
+                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500 disabled:opacity-50"
+              />
+              <button type="submit" disabled={!socketConnected}
+                className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition disabled:opacity-50">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>
               </button>
             </form>

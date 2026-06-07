@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mediaUrl } from '../utils/mediaUrl';
 import api from '../utils/api';
@@ -153,7 +153,7 @@ export default function VeloGram() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Error';
       if (err.response?.status === 401) {
-        setAddMsg({ text: 'Session expired — please log out and log in again', ok: false, expired: true });
+        setAddMsg({ text: 'Session expired â€” please log out and log in again', ok: false, expired: true });
       } else {
         setAddMsg({ text: msg, ok: false });
       }
@@ -227,7 +227,7 @@ export default function VeloGram() {
             )}
           </button>
 
-          {/* DM list — friends */}
+          {/* DM list â€” friends */}
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-2 pt-4 pb-1">Direct Messages</p>
           {friends.length === 0 && (
             <p className="text-gray-500 text-xs px-2 py-1 opacity-50">Add friends to start chatting</p>
@@ -276,14 +276,14 @@ export default function VeloGram() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {activeDM ? (
-          /* ── CHAT VIEW ── */
+          /* â”€â”€ CHAT VIEW â”€â”€ */
           <>
             <div className="h-12 bg-[#313338] border-b border-[#1e1f22] flex items-center px-4 gap-3 flex-shrink-0 shadow-sm">
               <Avatar user={activeDM} size={8} />
               <span className="text-white font-semibold text-sm">{activeDM.name}</span>
               <span className="text-gray-400 text-xs">@{activeDM.username}</span>
               <div className="flex-1" />
-              <button onClick={() => navigate(`/c/${activeDM.channelToken || activeDM._id}`)} className="p-1.5 hover:bg-[#404249] rounded transition" title="View channel">
+              <button onClick={() => navigate(`/c/${activeDM.username}`)} className="p-1.5 hover:bg-[#404249] rounded transition" title="View channel">
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
               </button>
             </div>
@@ -399,7 +399,7 @@ export default function VeloGram() {
             </div>
           </>
         ) : (
-          /* ── FRIENDS VIEW ── */
+          /* â”€â”€ FRIENDS VIEW â”€â”€ */
           <>
             <div className="h-12 bg-[#313338] border-b border-[#1e1f22] flex items-center px-4 gap-3 flex-shrink-0 shadow-sm">
               <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -457,7 +457,7 @@ export default function VeloGram() {
                     )}
                     {sent.length > 0 && (
                       <div className="mt-8">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Sent — {sent.length}</p>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Sent â€” {sent.length}</p>
                         {sent.map(f => (
                           <div key={f._id} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[#35373c] transition group">
                             <Avatar user={f.recipient} size={10} />
@@ -479,7 +479,7 @@ export default function VeloGram() {
                   <div className="p-4 space-y-6">
                     {/* Incoming */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Incoming — {pending.length}</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Incoming â€” {pending.length}</p>
                       {pending.length === 0
                         ? <p className="text-[#949ba4] text-sm px-2">No incoming requests</p>
                         : pending.map(f => (
@@ -503,7 +503,7 @@ export default function VeloGram() {
 
                     {/* Outgoing / Sent */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Sent — {sent.length}</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">Sent â€” {sent.length}</p>
                       {sent.length === 0
                         ? <p className="text-[#949ba4] text-sm px-2">No sent requests</p>
                         : sent.map(f => (
@@ -524,7 +524,7 @@ export default function VeloGram() {
 
                 {(tab === 'All' || tab === 'Online') && (
                   <div className="p-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">All Friends — {friends.length}</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-2">All Friends â€” {friends.length}</p>
                     {friends.length === 0 ? (
                       <div className="flex flex-col items-center py-20 gap-3">
                         <p className="text-[#949ba4] text-sm font-semibold">No friends yet</p>
@@ -564,3 +564,6 @@ export default function VeloGram() {
     </div>
   );
 }
+
+
+

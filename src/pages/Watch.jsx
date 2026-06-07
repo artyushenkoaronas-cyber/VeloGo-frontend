@@ -1,4 +1,4 @@
-import { mediaUrl } from '../utils/mediaUrl';
+﻿import { mediaUrl } from '../utils/mediaUrl';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
@@ -139,7 +139,7 @@ export default function Watch() {
 
   const goChannel = (uploader) => {
     if (!uploader) return;
-    navigate(`/c/${uploader.channelToken || uploader._id}`);
+    navigate(`/c/${uploader.username}`);
   };
 
   const videoSrc = mediaUrl(video.videoUrl);
@@ -201,7 +201,7 @@ export default function Watch() {
               <div className="flex gap-2">
                 <button onClick={handleEditSave} disabled={editSaving}
                   className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-full transition disabled:opacity-50">
-                  {editSaving ? 'Saving…' : 'Save'}
+                  {editSaving ? 'Savingâ€¦' : 'Save'}
                 </button>
                 <button onClick={() => setEditOpen(false)}
                   className="bg-zinc-700 hover:bg-zinc-600 text-white text-sm px-4 py-1.5 rounded-full transition">
@@ -282,7 +282,7 @@ export default function Watch() {
                       and{' '}
                       {video.collaborators.map((c, i) => (
                         <span key={c._id}>
-                          <button onClick={() => navigate(`/c/${c.channelToken || c._id}`)}
+                          <button onClick={() => navigate(`/c/${c.username}`)}
                             className="text-white font-medium hover:opacity-80 transition">
                             {c.name}
                           </button>
@@ -407,7 +407,7 @@ export default function Watch() {
                   return (
                     <div key={v._id} onClick={() => navigate(`/watch/${v._id}?list=${listId}`)}
                       className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition ${isActive ? 'bg-zinc-700' : 'hover:bg-zinc-800'}`}>
-                      <span className="text-gray-500 text-xs w-4 text-center flex-shrink-0">{isActive ? '▶' : idx + 1}</span>
+                      <span className="text-gray-500 text-xs w-4 text-center flex-shrink-0">{isActive ? 'â–¶' : idx + 1}</span>
                       <div className="w-24 h-14 bg-zinc-800 rounded-lg overflow-hidden flex-shrink-0">
                         {t ? <img src={t} className="w-full h-full object-cover" />
                           : <div className="w-full h-full flex items-center justify-center">
@@ -461,12 +461,12 @@ function CollaboratorCard({ collab: c, token, headers, navigate, me }) {
 
   return (
     <div className="flex items-center gap-3">
-      <button onClick={() => navigate(`/c/${c.channelToken || c._id}`)}
+      <button onClick={() => navigate(`/c/${c.username}`)}
         className="w-10 h-10 rounded-full bg-red-600 flex-shrink-0 flex items-center justify-center overflow-hidden hover:opacity-90 transition">
         {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : <span className="text-white text-sm font-bold">{c.name?.[0]?.toUpperCase()}</span>}
       </button>
       <div className="flex-1 min-w-0">
-        <button onClick={() => navigate(`/c/${c.channelToken || c._id}`)}
+        <button onClick={() => navigate(`/c/${c.username}`)}
           className="flex items-center gap-1 hover:opacity-80 transition">
           <span className="text-white text-sm font-medium">{c.name}</span>
           {c.isOfficialArtist && <OfficialArtistBadge size={14} />}
@@ -526,3 +526,7 @@ function RecommendedCard({ video }) {
     </div>
   );
 }
+
+
+
+

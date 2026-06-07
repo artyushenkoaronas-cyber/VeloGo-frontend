@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
@@ -131,13 +131,13 @@ export default function Home() {
                     </div>
                     {/* Viewer count */}
                     <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
-                      👁 {stream.viewers || 0} watching
+                      ðŸ‘ {stream.viewers || 0} watching
                     </div>
                   </div>
                   <div className="flex gap-3">
                     <div
                       className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0"
-                      onClick={e => { e.stopPropagation(); navigate(`/c/${stream.streamer?.channelToken || stream.streamer?._id}`); }}
+                      onClick={e => { e.stopPropagation(); navigate(`/c/${stream.streamer?.username}`); }}
                     >
                       {stream.streamer?.avatar
                         ? <img src={mediaUrl(stream.streamer.avatar)} className="w-full h-full object-cover" />
@@ -157,3 +157,6 @@ export default function Home() {
     </div>
   );
 }
+
+
+
