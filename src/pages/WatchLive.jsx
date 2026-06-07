@@ -269,7 +269,7 @@ export default function WatchLive() {
                   </div>
                   <div className="text-xs leading-5 break-words min-w-0">
                     {msg.user?.isFounder && <FounderBadge size={12} />}{' '}
-                    <span className={`font-semibold ${nameColor}`}>{msg.user?.name || msg.user?.username}</span>
+                    <span className="font-semibold" style={{ color: msg.user?.isFounder ? '#facc15' : isOwner ? '#60a5fa' : '#ffffff' }}>{msg.user?.name || msg.user?.username}</span>
                     {msg.user?.isVerified && (
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="inline text-zinc-400 ml-0.5 -mt-0.5">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
