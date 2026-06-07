@@ -72,9 +72,10 @@ export default function LiveStream() {
     };
   }, [id]);
 
+  const chatScrollRef = useRef(null);
   useEffect(() => {
-    const el = chatEndRef.current;
-    if (el) el.scrollIntoView({ behavior: 'auto' });
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [chat]);
 
   const startCamera = async () => {
@@ -262,29 +263,35 @@ export default function LiveStream() {
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
             {!socketConnected && <span className="text-yellow-400 text-xs">Connecting...</span>}
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
             {chat.map((msg, i) => {
               const isOwner = msg.user?.username === me.username;
-              const nameColor = isOwner
-                ? 'text-blue-400'
-                : msg.user?.isFounder
-                  ? 'text-yellow-400'
+              const nameColor = msg.user?.isFounder
+                ? 'text-yellow-400'
+                : isOwner
+                  ? 'text-blue-400'
                   : 'text-white';
               return (
-                <div key={msg.id || i} className="text-xs leading-5 break-words">
-                  {msg.user?.isFounder && <FounderBadge size={12} />}{' '}
-                  <span className={`font-semibold ${nameColor}`}>{msg.user?.name || msg.user?.username}</span>
-                  {msg.user?.isVerified && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="inline text-zinc-400 ml-0.5 -mt-0.5">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                    </svg>
-                  )}
-                  <span className="text-zinc-300">: {msg.message}</span>
+                <div key={msg.id || i} className="flex items-start gap-1.5">
+                  <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0 overflow-hidden mt-0.5">
+                    {msg.user?.avatar
+                      ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
+                      : msg.user?.name?.[0]?.toUpperCase() || '?'}
+                  </div>
+                  <div className="text-xs leading-5 break-words min-w-0">
+                    {msg.user?.isFounder && <FounderBadge size={12} />}{' '}
+                    <span className={`font-semibold ${nameColor}`}>{msg.user?.name || msg.user?.username}</span>
+                    {msg.user?.isVerified && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="inline text-zinc-400 ml-0.5 -mt-0.5">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                      </svg>
+                    )}
+                    <span className="text-zinc-300">: {msg.message}</span>
+                  </div>
                 </div>
               );
             })}
-            <div ref={chatEndRef} />
           </div>
           {stream?.chatMode !== 'none' && (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
