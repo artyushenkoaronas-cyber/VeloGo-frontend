@@ -14,7 +14,7 @@ import BgCropModal from '../components/BgCropModal';
 import ShortTrimModal from '../components/ShortTrimModal';
 import api from '../utils/api';
 
-const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
+const tabs = ['Home', 'Videos', 'Shorts', 'Live', 'Playlists', 'Posts'];
 
 function fv(n) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;

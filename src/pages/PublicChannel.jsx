@@ -11,7 +11,7 @@ import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
 import MazeBadge from '../components/MazeBadge';
 
-const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
+const tabs = ['Home', 'Videos', 'Shorts', 'Live', 'Playlists', 'Posts'];
 
 function fv(n) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -36,6 +36,7 @@ const { username } = useParams();
   const [subCount, setSubCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
   const [playlists, setPlaylists] = useState([]);
+  const [liveStreams, setLiveStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -81,6 +82,11 @@ const { username } = useParams();
       try {
         const pls = await api.get(`/api/playlists/user/${data._id}`);
         setPlaylists(pls.data || []);
+      } catch {}
+
+      try {
+        const lives = await api.get('/api/lives');
+        setLiveStreams((lives.data || []).filter(s => s.streamer?._id === data._id || s.streamer === data._id));
       } catch {}
 
     } catch {
@@ -352,6 +358,41 @@ const { username } = useParams();
               </>
             );
           })()}
+
+          {/* LIVE tab */}
+          {activeTab === 'Live' && (
+            liveStreams.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-white font-medium">No live streams yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
+                {liveStreams.map(stream => (
+                  <div key={stream._id} className="cursor-pointer group" onClick={() => navigate(`/watch-live/${stream._id}`)}>
+                    <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3">
+                      {stream.thumbnail
+                        ? <img src={mediaUrl(stream.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        : <div className="w-full h-full bg-gradient-to-br from-red-900 via-zinc-800 to-zinc-900 flex items-center justify-center">
+                            <svg className="w-10 h-10 text-red-500 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                          </div>}
+                      {stream.isLive && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
+                        </div>
+                      )}
+                      {stream.isLive && (
+                        <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                          👁 {stream.viewers || 0} watching
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-white text-sm font-medium line-clamp-2">{stream.title}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{stream.isLive ? 'Live now' : 'Ended'}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
 
           {/* PLAYLISTS tab */}
           {activeTab === 'Playlists' && (

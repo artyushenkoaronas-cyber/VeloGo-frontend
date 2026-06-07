@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VideoCard from '../components/VideoCard';
+import { mediaUrl } from '../utils/mediaUrl';
 
 const categories = ['All', 'Gaming', 'Music', 'Minecraft', 'Technology', 'Sports', 'Movies', 'News', 'Fashion', 'Food', 'Travel', 'Live'];
 
 export default function Home() {
   const location = useLocation();
+  const navigate = useNavigate();
   const searchQuery = new URLSearchParams(location.search).get('search') || '';
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [loading, setLoading] = useState(false);
+  const [liveStreams, setLiveStreams] = useState([]);
 
   // Load from cache immediately, then refresh in background
   const CACHE_KEY = 'velogo_home_videos';
@@ -26,7 +29,15 @@ export default function Home() {
 
   useEffect(() => {
     fetchVideos();
+    fetchLives();
   }, [activeCategory, searchQuery]);
+
+  const fetchLives = async () => {
+    try {
+      const { data } = await api.get('/api/lives');
+      setLiveStreams(data.filter(s => s.isLive));
+    } catch {}
+  };
 
   const fetchVideos = async () => {
     // Only show spinner if no cached data
@@ -92,6 +103,54 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Live now section */}
+        {liveStreams.length > 0 && (
+          <div className="px-4 pb-8">
+            <h2 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+              <span className="flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
+              </span>
+              Live now
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {liveStreams.map(stream => (
+                <div key={stream._id} className="cursor-pointer group" onClick={() => navigate(`/watch-live/${stream._id}`)}>
+                  <div className="relative aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
+                    {stream.thumbnail
+                      ? <img src={mediaUrl(stream.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      : <div className="w-full h-full bg-gradient-to-br from-red-900 via-zinc-800 to-zinc-900 flex items-center justify-center">
+                          <svg className="w-12 h-12 text-red-500 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                        </div>}
+                    {/* LIVE badge */}
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
+                      LIVE
+                    </div>
+                    {/* Viewer count */}
+                    <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                      👁 {stream.viewers || 0} watching
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div
+                      className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0"
+                      onClick={e => { e.stopPropagation(); navigate(`/c/${stream.streamer?.channelToken || stream.streamer?._id}`); }}
+                    >
+                      {stream.streamer?.avatar
+                        ? <img src={mediaUrl(stream.streamer.avatar)} className="w-full h-full object-cover" />
+                        : <span className="text-white text-sm font-bold">{stream.streamer?.name?.[0]?.toUpperCase()}</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug">{stream.title}</h3>
+                      <p className="text-gray-400 text-xs mt-0.5">{stream.streamer?.name}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

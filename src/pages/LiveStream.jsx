@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
+import { mediaUrl } from '../utils/mediaUrl';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
 
@@ -21,6 +22,7 @@ export default function LiveStream() {
   const [loading, setLoading] = useState(true);
   const [ending, setEnding] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
 
   const videoRef = useRef(null);
   const socketRef = useRef(null);
@@ -123,12 +125,17 @@ export default function LiveStream() {
     setIsLive(true);
   };
 
-  const endStream = async () => {
+  const endStream = async (saveToChannel) => {
     setEnding(true);
+    setShowEndModal(false);
     socketRef.current?.emit('live:end', { streamId: id });
     await api.post(`/api/lives/${id}/end`, {}, { headers }).catch(() => {});
     if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
     Object.values(peersRef.current).forEach(pc => pc.close());
+    // Delete stream if user doesn't want to save
+    if (!saveToChannel) {
+      await api.delete(`/api/lives/${id}`, { headers }).catch(() => {});
+    }
     navigate('/channel');
   };
 
@@ -152,6 +159,39 @@ export default function LiveStream() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
       <Navbar onMenuToggle={() => {}} />
+
+      {/* End stream modal */}
+      {showEndModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-[#212121] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h2 className="text-white text-lg font-semibold mb-2">End stream</h2>
+            <p className="text-gray-400 text-sm mb-5">Do you want to save this stream to your channel so others can watch it later?</p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => endStream(true)}
+                disabled={ending}
+                className="w-full bg-white text-black py-2.5 rounded-full text-sm font-semibold hover:bg-gray-100 transition disabled:opacity-50"
+              >
+                Save to channel & end
+              </button>
+              <button
+                onClick={() => endStream(false)}
+                disabled={ending}
+                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50"
+              >
+                End without saving
+              </button>
+              <button
+                onClick={() => setShowEndModal(false)}
+                className="w-full text-gray-400 hover:text-white py-2 text-sm transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pt-14 flex flex-1 overflow-hidden">
         {/* Main stream area */}
         <div className="flex-1 flex flex-col p-4 gap-4">
@@ -196,22 +236,35 @@ export default function LiveStream() {
                 Go Live
               </button>
             ) : (
-              <button onClick={endStream} disabled={ending}
+              <button onClick={() => setShowEndModal(true)} disabled={ending}
                 className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-6 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50">
                 {ending ? 'Ending...' : 'End stream'}
               </button>
             )}
           </div>
 
-          {/* Stream info */}
+          {/* Stream info + profile */}
           {stream && (
-            <div className="bg-zinc-900 rounded-xl p-4">
-              <h2 className="text-white font-semibold">{stream.title}</h2>
-              {stream.description && <p className="text-gray-400 text-sm mt-1">{stream.description}</p>}
-              <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
-                <span>Chat: {stream.chatMode === 'everyone' ? 'Everyone' : stream.chatMode === 'subscribers' ? 'Subscribers only' : 'Disabled'}</span>
-                <span>·</span>
-                <span>{stream.visibility === 'public' ? '🌍 Public' : '🔗 Unlisted'}</span>
+            <div className="bg-zinc-900 rounded-xl p-4 flex gap-4 items-start">
+              {/* Avatar */}
+              <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {me.avatar
+                  ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" />
+                  : <span className="text-white font-bold text-lg">{me.name?.[0]?.toUpperCase()}</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-white font-semibold text-sm">{me.name}</span>
+                  <span className="text-zinc-500 text-xs">@{me.username}</span>
+                </div>
+                <h2 className="text-white font-medium">{stream.title}</h2>
+                {stream.description && <p className="text-gray-400 text-sm mt-1">{stream.description}</p>}
+                <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
+                  <span>Chat: {stream.chatMode === 'everyone' ? 'Everyone' : stream.chatMode === 'subscribers' ? 'Subscribers only' : 'Disabled'}</span>
+                  <span>·</span>
+                  <span>{stream.visibility === 'public' ? '🌍 Public' : '🔗 Unlisted'}</span>
+                  {isLive && <><span>·</span><span>👁 {viewers} watching</span></>}
+                </div>
               </div>
             </div>
           )}
