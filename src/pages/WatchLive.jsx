@@ -9,6 +9,9 @@ import FounderBadge from '../components/FounderBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
+const MIME = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => {
+  try { return MediaSource.isTypeSupported(m); } catch { return false; }
+}) || 'video/webm';
 
 function safeUser() {
   try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; }
@@ -24,61 +27,104 @@ export default function WatchLive() {
   const [chat, setChat] = useState([]);
   const [chatMsg, setChatMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [hasVideo, setHasVideo] = useState(false);
 
   const videoRef = useRef(null);
   const socketRef = useRef(null);
-  const pcRef = useRef(null);
+  const msRef = useRef(null);      // MediaSource
+  const sbRef = useRef(null);      // SourceBuffer
+  const queueRef = useRef([]);     // pending chunks
+  const appendingRef = useRef(false);
   const chatEndRef = useRef(null);
 
   const token = localStorage.getItem('velogo_token');
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const me = safeUser();
+
+  // Setup MediaSource
+  const setupMediaSource = () => {
+    if (msRef.current) return;
+    const ms = new MediaSource();
+    msRef.current = ms;
+    videoRef.current.src = URL.createObjectURL(ms);
+
+    ms.addEventListener('sourceopen', () => {
+      try {
+        const sb = ms.addSourceBuffer(MIME);
+        sbRef.current = sb;
+        sb.addEventListener('updateend', () => {
+          appendingRef.current = false;
+          drainQueue();
+        });
+      } catch (e) {
+        console.warn('MediaSource error:', e);
+      }
+    });
+  };
+
+  const drainQueue = () => {
+    if (appendingRef.current || !sbRef.current || queueRef.current.length === 0) return;
+    if (sbRef.current.updating) return;
+    try {
+      const chunk = queueRef.current.shift();
+      appendingRef.current = true;
+      sbRef.current.appendBuffer(chunk);
+      // Auto-play on first chunk
+      if (!hasVideo) {
+        setHasVideo(true);
+        videoRef.current?.play().catch(() => {});
+      }
+      // Keep buffer lean: remove old data
+      if (sbRef.current.buffered.length > 0) {
+        const end = sbRef.current.buffered.end(sbRef.current.buffered.length - 1);
+        if (end > 30) {
+          try { sbRef.current.remove(0, end - 20); } catch {}
+        }
+      }
+    } catch (e) {
+      appendingRef.current = false;
+    }
+  };
 
   useEffect(() => {
     api.get(`/api/lives/${id}`).then(r => {
       setStream(r.data);
       setLoading(false);
-    }).catch(() => { navigate('/'); });
+    }).catch(() => navigate('/'));
 
     const socket = io(BACKEND, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
-    socket.emit('live:join', {
-      streamId: id,
-      user: { name: me.name, username: me.username, avatar: me.avatar },
+    socket.on('connect', () => {
+      setConnected(true);
+      socket.emit('live:join', {
+        streamId: id,
+        user: { name: me.name, username: me.username, avatar: me.avatar },
+      });
     });
+    socket.on('disconnect', () => setConnected(false));
 
-    socket.on('live:chat_history', msgs => setChat(msgs));
+    socket.on('live:chat_history', msgs => setChat(msgs || []));
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
     socket.on('live:viewers', count => setViewers(count));
     socket.on('live:ended', () => setEnded(true));
 
-    // Receive offer from streamer
-    socket.on('live:offer', async ({ from, offer }) => {
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      pcRef.current = pc;
-
-      pc.onicecandidate = e => {
-        if (e.candidate) socket.emit('live:ice', { targetSocketId: from, candidate: e.candidate });
-      };
-
-      pc.ontrack = e => {
-        if (videoRef.current) videoRef.current.srcObject = e.streams[0];
-      };
-
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('live:answer', { targetSocketId: from, answer });
-    });
-
-    socket.on('live:ice', ({ candidate }) => {
-      pcRef.current?.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+    // Receive video chunk from streamer
+    socket.on('live:chunk', (chunk) => {
+      if (!videoRef.current) return;
+      if (!msRef.current) setupMediaSource();
+      // chunk might be ArrayBuffer already
+      const buf = chunk instanceof ArrayBuffer ? chunk : new Uint8Array(chunk).buffer;
+      queueRef.current.push(buf);
+      drainQueue();
     });
 
     return () => {
       socket.disconnect();
-      pcRef.current?.close();
+      if (msRef.current && msRef.current.readyState === 'open') {
+        try { msRef.current.endOfStream(); } catch {}
+      }
     };
   }, [id]);
 
@@ -88,20 +134,13 @@ export default function WatchLive() {
 
   const sendChat = (e) => {
     e.preventDefault();
-    if (!chatMsg.trim()) return;
-    socketRef.current?.emit('live:chat', {
+    if (!chatMsg.trim() || !socketRef.current?.connected) return;
+    socketRef.current.emit('live:chat', {
       streamId: id,
       message: chatMsg.trim(),
       user: { name: me.name, username: me.username, avatar: me.avatar },
     });
     setChatMsg('');
-  };
-
-  const canChat = () => {
-    if (!stream) return false;
-    if (stream.chatMode === 'none') return false;
-    if (!me.id) return false;
-    return true;
   };
 
   if (loading) return (
@@ -119,15 +158,25 @@ export default function WatchLive() {
       <div className={`pt-14 transition-all duration-200 flex ${sidebarOpen ? 'ml-60' : 'ml-16'}`}>
         {/* Video + info */}
         <div className="flex-1 flex flex-col">
-          {/* Video */}
           <div className="relative w-full bg-black" style={{ aspectRatio: '16/9', maxHeight: '70vh' }}>
             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+
             {ended && (
               <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-3">
                 <p className="text-white text-xl font-semibold">Stream ended</p>
                 <button onClick={() => navigate('/')} className="bg-white text-black px-6 py-2 rounded-full text-sm font-semibold">Go home</button>
               </div>
             )}
+
+            {!ended && !hasVideo && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-gray-400 text-sm">
+                  {connected ? (stream?.isLive ? 'Connecting to stream...' : 'Waiting for streamer to go live...') : 'Connecting...'}
+                </p>
+              </div>
+            )}
+
             {!ended && stream?.isLive && (
               <div className="absolute top-3 left-3 flex items-center gap-2">
                 <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
@@ -136,22 +185,14 @@ export default function WatchLive() {
                 <span className="bg-black/60 text-white text-xs px-2 py-0.5 rounded">👁 {viewers}</span>
               </div>
             )}
-            {!stream?.isLive && !ended && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-400 text-sm">Waiting for stream to start...</p>
-              </div>
-            )}
           </div>
 
           {/* Stream info */}
           <div className="p-5 border-b border-zinc-800">
             <h1 className="text-white text-xl font-bold">{stream?.title}</h1>
             <div className="flex items-center gap-3 mt-3">
-              <div
-                className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
-                onClick={() => navigate(`/channel/${streamer?.channelToken || streamer?._id}`)}
-              >
+              <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
+                onClick={() => navigate(`/c/${streamer?.channelToken || streamer?._id}`)}>
                 {streamer?.avatar
                   ? <img src={mediaUrl(streamer.avatar)} className="w-full h-full object-cover" />
                   : <span className="text-white font-bold">{streamer?.name?.[0]?.toUpperCase()}</span>}
@@ -159,10 +200,10 @@ export default function WatchLive() {
               <div>
                 <div className="flex items-center gap-1.5">
                   {streamer?.isFounder && <FounderBadge size={16} />}
-                  <span
-                    className="text-white font-medium text-sm cursor-pointer hover:underline"
-                    onClick={() => navigate(`/channel/${streamer?.channelToken || streamer?._id}`)}
-                  >{streamer?.name}</span>
+                  <span className="text-white font-medium text-sm cursor-pointer hover:underline"
+                    onClick={() => navigate(`/c/${streamer?.channelToken || streamer?._id}`)}>
+                    {streamer?.name}
+                  </span>
                   {streamer?.isVerified && <VerifiedBadge size={14} />}
                 </div>
                 <p className="text-zinc-500 text-xs">@{streamer?.username}</p>
@@ -172,11 +213,12 @@ export default function WatchLive() {
           </div>
         </div>
 
-        {/* Live chat sidebar */}
+        {/* Live chat */}
         <div className="w-80 flex flex-col border-l border-zinc-800 h-[calc(100vh-56px)] sticky top-14">
           <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
             <h3 className="text-white font-semibold text-sm">Live chat</h3>
             <span className="text-zinc-500 text-xs">· {viewers} watching</span>
+            <span className={`w-2 h-2 rounded-full ml-auto flex-shrink-0 ${connected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} title={connected ? 'Connected' : 'Connecting...'} />
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
             {chat.length === 0 && !ended && (
@@ -203,13 +245,8 @@ export default function WatchLive() {
             </div>
           ) : (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
-              <input
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-                placeholder="Chat..."
-                maxLength={200}
-                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500"
-              />
+              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder="Chat..." maxLength={200}
+                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500" />
               <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>
               </button>

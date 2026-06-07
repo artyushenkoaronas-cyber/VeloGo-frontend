@@ -27,7 +27,7 @@ export default function LiveStream() {
   const videoRef = useRef(null);
   const socketRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const peersRef = useRef({}); // viewerSocketId -> RTCPeerConnection
+  const recorderRef = useRef(null);
   const chatEndRef = useRef(null);
 
   const token = localStorage.getItem('velogo_token');
@@ -48,36 +48,12 @@ export default function LiveStream() {
       socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar } });
     });
     socket.on('disconnect', () => setSocketConnected(false));
-    socket.on('live:connected', () => setSocketConnected(true));
-
     socket.on('live:viewers', count => setViewers(count));
-
-    // New viewer joined — send them a WebRTC offer
-    socket.on('live:viewer_joined', async ({ viewerSocketId }) => {
-      if (!mediaStreamRef.current) return;
-      const pc = createPeerConnection(viewerSocketId, socket);
-      peersRef.current[viewerSocketId] = pc;
-      mediaStreamRef.current.getTracks().forEach(track => pc.addTrack(track, mediaStreamRef.current));
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('live:offer', { targetSocketId: viewerSocketId, offer });
-    });
-
-    socket.on('live:answer', async ({ from, answer }) => {
-      const pc = peersRef.current[from];
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('live:ice', ({ from, candidate }) => {
-      const pc = peersRef.current[from];
-      if (pc && candidate) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
-    });
-
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
 
     return () => {
       socket.disconnect();
-      Object.values(peersRef.current).forEach(pc => pc.close());
+      recorderRef.current?.stop();
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
     };
   }, [id]);
@@ -86,56 +62,57 @@ export default function LiveStream() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
 
-  function createPeerConnection(viewerSocketId, socket) {
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-    pc.onicecandidate = e => {
-      if (e.candidate) socket.emit('live:ice', { targetSocketId: viewerSocketId, candidate: e.candidate });
-    };
-    return pc;
-  }
-
   const startCamera = async () => {
     try {
       const ms = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       mediaStreamRef.current = ms;
       if (videoRef.current) videoRef.current.srcObject = ms;
-    } catch (e) {
-      alert('Could not access camera: ' + e.message);
-    }
+    } catch (e) { alert('Could not access camera: ' + e.message); }
   };
 
   const startScreen = async () => {
     try {
-      const ms = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const ms = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true });
       mediaStreamRef.current = ms;
       if (videoRef.current) videoRef.current.srcObject = ms;
       ms.getVideoTracks()[0].onended = () => {
+        recorderRef.current?.stop();
         setIsLive(false);
         mediaStreamRef.current = null;
         if (videoRef.current) videoRef.current.srcObject = null;
       };
-    } catch (e) {
-      alert('Could not share screen: ' + e.message);
-    }
+    } catch (e) { alert('Could not share screen: ' + e.message); }
   };
 
   const goLive = async () => {
-    if (!mediaStreamRef.current) { alert('Please select camera or screen first'); return; }
+    if (!mediaStreamRef.current) { alert('Please select Camera or Share screen first'); return; }
     await api.post(`/api/lives/${id}/start`, {}, { headers });
     setIsLive(true);
+
+    // Pick best supported MIME type
+    const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+    const recorder = new MediaRecorder(mediaStreamRef.current, { mimeType, videoBitsPerSecond: 1500000 });
+    recorderRef.current = recorder;
+
+    recorder.ondataavailable = async (e) => {
+      if (e.data && e.data.size > 0 && socketRef.current?.connected) {
+        const buf = await e.data.arrayBuffer();
+        socketRef.current.emit('live:chunk', { streamId: id, chunk: buf });
+      }
+    };
+
+    recorder.start(1000); // send 1-second chunks
   };
 
   const endStream = async (saveToChannel) => {
     setEnding(true);
     setShowEndModal(false);
+    recorderRef.current?.stop();
     socketRef.current?.emit('live:end', { streamId: id });
     await api.post(`/api/lives/${id}/end`, {}, { headers }).catch(() => {});
     if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
-    Object.values(peersRef.current).forEach(pc => pc.close());
-    // Delete stream if user doesn't want to save
-    if (!saveToChannel) {
-      await api.delete(`/api/lives/${id}`, { headers }).catch(() => {});
-    }
+    if (!saveToChannel) await api.delete(`/api/lives/${id}`, { headers }).catch(() => {});
     navigate('/channel');
   };
 
@@ -160,47 +137,36 @@ export default function LiveStream() {
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
       <Navbar onMenuToggle={() => {}} />
 
-      {/* End stream modal */}
       {showEndModal && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className="bg-[#212121] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <h2 className="text-white text-lg font-semibold mb-2">End stream</h2>
-            <p className="text-gray-400 text-sm mb-5">Do you want to save this stream to your channel so others can watch it later?</p>
+            <p className="text-gray-400 text-sm mb-5">Do you want to save this stream to your channel?</p>
             <div className="flex flex-col gap-2">
-              <button
-                onClick={() => endStream(true)}
-                disabled={ending}
-                className="w-full bg-white text-black py-2.5 rounded-full text-sm font-semibold hover:bg-gray-100 transition disabled:opacity-50"
-              >
+              <button onClick={() => endStream(true)} disabled={ending}
+                className="w-full bg-white text-black py-2.5 rounded-full text-sm font-semibold hover:bg-gray-100 transition disabled:opacity-50">
                 Save to channel & end
               </button>
-              <button
-                onClick={() => endStream(false)}
-                disabled={ending}
-                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50"
-              >
+              <button onClick={() => endStream(false)} disabled={ending}
+                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50">
                 End without saving
               </button>
-              <button
-                onClick={() => setShowEndModal(false)}
-                className="w-full text-gray-400 hover:text-white py-2 text-sm transition"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowEndModal(false)} className="w-full text-gray-400 hover:text-white py-2 text-sm transition">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       <div className="pt-14 flex flex-1 overflow-hidden">
-        {/* Main stream area */}
         <div className="flex-1 flex flex-col p-4 gap-4">
-          {/* Video preview */}
           <div className="relative w-full bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '60vh' }}>
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" />
             {!mediaStreamRef.current && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-zinc-500 text-sm">No source selected</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <svg className="w-12 h-12 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                </svg>
+                <p className="text-zinc-500 text-sm">Select Camera or Share screen to start</p>
               </div>
             )}
             {isLive && (
@@ -213,7 +179,6 @@ export default function LiveStream() {
             )}
           </div>
 
-          {/* Controls */}
           <div className="flex items-center gap-3 flex-wrap">
             <button onClick={startCamera}
               className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-full text-sm transition">
@@ -243,13 +208,10 @@ export default function LiveStream() {
             )}
           </div>
 
-          {/* Stream info + profile */}
           {stream && (
             <div className="bg-zinc-900 rounded-xl p-4 flex gap-4 items-start">
-              {/* Avatar */}
               <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {me.avatar
-                  ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" />
+                {me.avatar ? <img src={mediaUrl(me.avatar)} className="w-full h-full object-cover" />
                   : <span className="text-white font-bold text-lg">{me.name?.[0]?.toUpperCase()}</span>}
               </div>
               <div className="flex-1 min-w-0">
@@ -270,11 +232,10 @@ export default function LiveStream() {
           )}
         </div>
 
-        {/* Live chat */}
         <div className="w-80 flex flex-col border-l border-zinc-800 bg-[#0f0f0f]">
           <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
             <h3 className="text-white font-semibold text-sm">Live chat</h3>
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} title={socketConnected ? 'Connected' : 'Connecting...'} />
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
@@ -293,13 +254,8 @@ export default function LiveStream() {
           </div>
           {stream?.chatMode !== 'none' && (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
-              <input
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-                placeholder="Chat..."
-                maxLength={200}
-                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500"
-              />
+              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} placeholder="Chat..." maxLength={200}
+                className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500" />
               <button type="submit" className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-sm transition">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>
               </button>
