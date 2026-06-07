@@ -1,4 +1,5 @@
 import { mediaUrl } from '../utils/mediaUrl';
+import VideoThumbnail from '../components/VideoThumbnail';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
@@ -250,11 +251,7 @@ const { username } = useParams();
                     {videos.filter(v => v.isShort).map(v => (
                       <div key={v._id} className="flex-shrink-0 w-32 cursor-pointer group" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                         <div className="w-32 aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 relative">
-                          {v.thumbnail
-                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                            : <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                                <svg className="w-8 h-8 text-zinc-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z" /></svg>
-                              </div>}
+                          <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                         </div>
                         <p className="text-white text-xs font-medium mt-1 line-clamp-2 leading-snug">{v.title}</p>
                         <p className="text-gray-400 text-xs">{fv(v.views || 0)} views</p>
@@ -299,13 +296,7 @@ const { username } = useParams();
                   {sorted.map(v => (
                     <div key={v._id} className="flex flex-col gap-2 cursor-pointer group" onClick={() => navigate(`/watch/${v._id}`)}>
                       <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-900">
-                        {v.thumbnail
-                          ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                          : <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-                              <svg className="w-10 h-10 text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z" />
-                              </svg>
-                            </div>}
+                        <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                       </div>
                       <div>
                         <p className="text-white text-sm font-medium line-clamp-2 leading-snug">{v.title}</p>
@@ -345,13 +336,7 @@ const { username } = useParams();
                   {sorted.map(v => (
                     <div key={v._id} className="flex flex-col gap-1 cursor-pointer group" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                       <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900">
-                        {v.thumbnail
-                          ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                          : <div className="w-full h-full flex items-center justify-center">
-                              <svg className="w-10 h-10 text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z" />
-                              </svg>
-                            </div>}
+                        <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                         <div className="absolute bottom-2 left-2 right-2">
                           <p className="text-white text-xs font-medium line-clamp-2 drop-shadow">{v.title}</p>
                         </div>

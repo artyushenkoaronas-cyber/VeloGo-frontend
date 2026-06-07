@@ -2,6 +2,7 @@ import { mediaUrl } from '../utils/mediaUrl';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
+import VideoThumbnail from './VideoThumbnail';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -36,14 +37,12 @@ export default function VideoCard({ video }) {
     <div className="cursor-pointer group" onClick={() => navigate(`/watch/${video._id}`)}>
       {/* Thumbnail */}
       <div className="relative w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-3">
-        {thumb
-          ? <img src={thumb} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
-          : <div className="w-full h-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-              </svg>
-            </div>
-        }
+        <VideoThumbnail
+          thumbnail={video.thumbnail}
+          videoUrl={video.videoUrl}
+          alt={video.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+        />
         {video.isMusicVideo && (
           <div className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center shadow-lg" title="Music Video">
             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">

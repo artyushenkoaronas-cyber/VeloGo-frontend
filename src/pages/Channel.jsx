@@ -1,4 +1,5 @@
 import { mediaUrl } from '../utils/mediaUrl';
+import VideoThumbnail from '../components/VideoThumbnail';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -395,9 +396,7 @@ export default function Channel() {
                     {shorts.map(v => (
                       <div key={v._id} className="relative flex-shrink-0 w-36 group/card cursor-pointer" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                         <div className="w-36 h-64 bg-zinc-800 rounded-xl overflow-hidden">
-                          {v.thumbnail
-                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
-                            : <div className="w-full h-full bg-zinc-700" />}
+                          <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
                         </div>
                         <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{v.title}</p>
                       </div>
@@ -413,9 +412,7 @@ export default function Channel() {
                     {videos.map(v => (
                       <div key={v._id} className="flex-shrink-0 w-56 relative group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
                         <div className="w-56 aspect-video bg-zinc-800 rounded-xl overflow-hidden">
-                          {v.thumbnail
-                            ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
-                            : <div className="w-full h-full bg-zinc-700" />}
+                          <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
                         </div>
                         <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{v.title}</p>
                         <p className="text-gray-500 text-xs">{v.views?.toLocaleString()} views</p>
@@ -507,9 +504,7 @@ export default function Channel() {
                 {shorts.map(v => (
                   <div key={v._id} className="relative group/card cursor-pointer" onClick={() => navigate(`/shorts?id=${v._id}`)}>
                     <div className="w-full aspect-[9/16] bg-zinc-800 rounded-xl overflow-hidden">
-                      {v.thumbnail
-                        ? <img src={mediaUrl(v.thumbnail)} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
-                        : <div className="w-full h-full bg-zinc-700" />}
+                      <VideoThumbnail thumbnail={v.thumbnail} videoUrl={v.videoUrl} className="w-full h-full object-cover group-hover/card:scale-105 transition" />
                     </div>
                     <p className="text-white text-xs font-medium mt-1 line-clamp-2">{v.title}</p>
                     <p className="text-gray-400 text-xs">{fv(v.views || 0)} views</p>
