@@ -29,6 +29,9 @@ import Setup from './pages/Setup';
 import VeloGram from './pages/VeloGram';
 import Subscriptions from './pages/Subscriptions';
 import Remix from './pages/Remix';
+import GoLive from './pages/GoLive';
+import LiveStream from './pages/LiveStream';
+import WatchLive from './pages/WatchLive';
 
 
 const PrivateRoute = ({ children }) => {
@@ -60,6 +63,9 @@ export default function App() {
         <Route path="/velogram" element={<PrivateRoute><VeloGram /></PrivateRoute>} />
         <Route path="/subscriptions" element={<PrivateRoute><Subscriptions /></PrivateRoute>} />
         <Route path="/remix/:id" element={<PrivateRoute><Remix /></PrivateRoute>} />
+        <Route path="/go-live" element={<PrivateRoute><GoLive /></PrivateRoute>} />
+        <Route path="/live/:id" element={<PrivateRoute><LiveStream /></PrivateRoute>} />
+        <Route path="/watch-live/:id" element={<WatchLive />} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>
