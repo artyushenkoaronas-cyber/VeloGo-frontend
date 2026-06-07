@@ -12,21 +12,36 @@ export default function Home() {
   const searchQuery = new URLSearchParams(location.search).get('search') || '';
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Load from cache immediately, then refresh in background
+  const CACHE_KEY = 'velogo_home_videos';
+  const [videos, setVideos] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  });
 
   useEffect(() => {
     fetchVideos();
   }, [activeCategory, searchQuery]);
 
   const fetchVideos = async () => {
-    setLoading(true);
+    // Only show spinner if no cached data
+    if (videos.length === 0) setLoading(true);
     try {
       const params = {};
       if (activeCategory !== 'All') params.category = activeCategory;
       if (searchQuery) params.search = searchQuery;
       const { data } = await api.get('/api/videos', { params });
-      setVideos(data.filter(v => !v.isShort));
+      const filtered = data.filter(v => !v.isShort);
+      setVideos(filtered);
+      // Cache only for 'All' category (no search)
+      if (activeCategory === 'All' && !searchQuery) {
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(filtered)); } catch {}
+      }
     } catch {}
     setLoading(false);
   };
