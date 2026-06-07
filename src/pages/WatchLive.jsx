@@ -31,7 +31,7 @@ export default function WatchLive() {
   const sbRef = useRef(null);
   const queueRef = useRef([]);
   const drainingRef = useRef(false);
-  const chatEndRef = useRef(null);
+  const chatScrollRef = useRef(null);
 
   const me = safeUser();
 
@@ -49,6 +49,48 @@ export default function WatchLive() {
     }
   };
 
+  // Set up MediaSource immediately on mount — video element is always in DOM
+  useEffect(() => {
+    if (typeof MediaSource === 'undefined') return;
+
+    const ms = new MediaSource();
+    msRef.current = ms;
+
+    const setupSrc = () => {
+      if (videoRef.current) {
+        videoRef.current.src = URL.createObjectURL(ms);
+      }
+    };
+    // Try immediately; if ref not ready yet, retry after paint
+    setupSrc();
+    const raf = requestAnimationFrame(setupSrc);
+
+    ms.addEventListener('sourceopen', () => {
+      const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+        .find(m => MediaSource.isTypeSupported(m));
+      if (!mimeType) return;
+      try {
+        const sb = ms.addSourceBuffer(mimeType);
+        sbRef.current = sb;
+        sb.addEventListener('updateend', () => {
+          drainingRef.current = false;
+          drainQueue();
+        });
+        // Drain any chunks that arrived before SourceBuffer was ready
+        drainQueue();
+      } catch (e) {
+        console.warn('addSourceBuffer error', e);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (ms.readyState === 'open') {
+        try { ms.endOfStream(); } catch {}
+      }
+    };
+  }, []);
+
   // Fetch stream info + set up socket
   useEffect(() => {
     api.get(`/api/lives/${id}`).then(r => {
@@ -61,7 +103,6 @@ export default function WatchLive() {
       setEnded(true);
     });
 
-    // polling first — more reliable through proxies/firewalls
     const socket = io(BACKEND, {
       transports: ['polling', 'websocket'],
       reconnectionAttempts: 10,
@@ -84,8 +125,7 @@ export default function WatchLive() {
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
 
     socket.on('live:chunk', (chunk) => {
-      if (!sbRef.current) return;
-      // Normalize chunk to ArrayBuffer regardless of how socket.io delivers it
+      // Normalize to ArrayBuffer
       let buf;
       if (chunk instanceof ArrayBuffer) {
         buf = chunk;
@@ -103,45 +143,10 @@ export default function WatchLive() {
 
     socket.on('live:ended', () => setEnded(true));
 
-    return () => {
-      socket.disconnect();
-      if (msRef.current && msRef.current.readyState === 'open') {
-        try { msRef.current.endOfStream(); } catch {}
-      }
-    };
+    return () => { socket.disconnect(); };
   }, [id]);
 
-  // Set up MediaSource AFTER loading is done so videoRef.current exists in the DOM
-  useEffect(() => {
-    if (loading || ended) return;
-    if (typeof MediaSource === 'undefined') return;
-    if (!videoRef.current) return;
-
-    const ms = new MediaSource();
-    msRef.current = ms;
-    videoRef.current.src = URL.createObjectURL(ms);
-
-    ms.addEventListener('sourceopen', () => {
-      // Try codecs in order of preference
-      const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
-        .find(m => MediaSource.isTypeSupported(m));
-      if (!mimeType) return;
-      try {
-        const sb = ms.addSourceBuffer(mimeType);
-        sbRef.current = sb;
-        sb.addEventListener('updateend', () => {
-          drainingRef.current = false;
-          drainQueue();
-        });
-        // Drain any chunks that arrived before MediaSource was ready
-        drainQueue();
-      } catch (e) {
-        console.warn('addSourceBuffer error', e);
-      }
-    });
-  }, [loading, ended]);
-
-  const chatScrollRef = useRef(null);
+  // Auto-scroll chat
   useEffect(() => {
     const el = chatScrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -157,12 +162,6 @@ export default function WatchLive() {
     });
     setChatMsg('');
   };
-
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
 
   if (ended) return (
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
@@ -186,20 +185,32 @@ export default function WatchLive() {
         {/* Video + info */}
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
           <div className="relative w-full bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '60vh' }}>
+            {/* video always rendered so ref is available immediately */}
             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
-            {/* Connecting overlay */}
-            {!socketConnected && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+
+            {/* Loading overlay */}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {/* Connecting overlay (shown after load but socket not connected) */}
+            {!loading && !socketConnected && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70">
                 <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
                 <p className="text-white text-sm">Connecting...</p>
               </div>
             )}
-            <div className="absolute top-3 left-3 flex items-center gap-2">
-              <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
-              </span>
-              <span className="bg-black/60 text-white text-xs px-2 py-0.5 rounded">👁 {viewers}</span>
-            </div>
+
+            {!loading && (
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
+                </span>
+                <span className="bg-black/60 text-white text-xs px-2 py-0.5 rounded">👁 {viewers}</span>
+              </div>
+            )}
           </div>
 
           {stream && (
@@ -239,6 +250,7 @@ export default function WatchLive() {
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
             {!socketConnected && <span className="text-yellow-400 text-xs">Connecting...</span>}
           </div>
+
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
             {chat.map((msg, i) => {
@@ -269,6 +281,7 @@ export default function WatchLive() {
               );
             })}
           </div>
+
           {stream?.chatMode !== 'none' && (
             <form onSubmit={sendChat} className="p-3 border-t border-zinc-800 flex gap-2">
               <input
