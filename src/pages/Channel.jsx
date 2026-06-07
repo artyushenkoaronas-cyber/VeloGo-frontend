@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
+import FounderBadge from '../components/FounderBadge';
 import VideoCard from '../components/VideoCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import BgCropModal from '../components/BgCropModal';
@@ -57,7 +58,7 @@ export default function Channel() {
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
-          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, avatar: r.data.avatar || user.avatar, createdAt: r.data.createdAt || user.createdAt, bio: r.data.bio || user.bio };
+          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, isFounder: r.data.isFounder, avatar: r.data.avatar || user.avatar, createdAt: r.data.createdAt || user.createdAt, bio: r.data.bio || user.bio };
           setUser(updated);
           localStorage.setItem('velogo_user', JSON.stringify(updated));
         }).catch(() => {});
@@ -257,6 +258,7 @@ export default function Channel() {
                 <>
                   <div className="flex items-center gap-2">
                     <h1 className="text-white text-2xl font-bold">{user.name}</h1>
+                    {user.isFounder && <FounderBadge size={22} />}
                     {user.isOfficialArtist && <OfficialArtistBadge size={22} />}
                     {user.isVerified && <VerifiedBadge size={22} full />}
                   </div>

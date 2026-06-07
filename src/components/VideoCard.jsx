@@ -2,6 +2,7 @@ import { mediaUrl } from '../utils/mediaUrl';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
+import FounderBadge from './FounderBadge';
 import VideoThumbnail from './VideoThumbnail';
 
 function timeAgo(date) {

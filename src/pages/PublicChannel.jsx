@@ -8,6 +8,7 @@ import Sidebar from '../components/Sidebar';
 import VideoCard from '../components/VideoCard';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
+import FounderBadge from '../components/FounderBadge';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Playlists', 'Posts'];
 
@@ -192,6 +193,7 @@ const { username } = useParams();
             <div className="pb-2 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
+                {channel?.isFounder && <FounderBadge size={22} />}
                 {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}
                 {channel?.isVerified && <VerifiedBadge size={22} full />}
               </div>

@@ -5,6 +5,7 @@ import api from '../utils/api';
 import UploadModal from './UploadModal';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
+import FounderBadge from './FounderBadge';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 

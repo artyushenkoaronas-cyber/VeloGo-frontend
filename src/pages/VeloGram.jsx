@@ -4,6 +4,7 @@ import { mediaUrl } from '../utils/mediaUrl';
 import api from '../utils/api';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
+import FounderBadge from '../components/FounderBadge';
 
 const TABS = ['Online', 'All', 'Pending', 'Add Friend'];
 
