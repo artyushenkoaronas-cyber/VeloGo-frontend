@@ -9,7 +9,7 @@ import FounderBadge from '../components/FounderBadge';
 import MazeBadge from '../components/MazeBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
 
-const BACKEND = import.meta.env.VITE_API_URL || 'https://velo-go.onrender.com';
+const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
 
 function safeUser() {
   try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; }

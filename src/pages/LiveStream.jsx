@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 
-const BACKEND = import.meta.env.VITE_API_URL || 'https://velo-go.onrender.com';
+const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
 
 function safeUser() {
   try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; }
@@ -20,6 +20,7 @@ export default function LiveStream() {
   const [chatMsg, setChatMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [ending, setEnding] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const videoRef = useRef(null);
   const socketRef = useRef(null);
@@ -40,7 +41,12 @@ export default function LiveStream() {
     const socket = io(BACKEND, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
-    socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar } });
+    socket.on('connect', () => {
+      setSocketConnected(true);
+      socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar } });
+    });
+    socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('live:connected', () => setSocketConnected(true));
 
     socket.on('live:viewers', count => setViewers(count));
 
@@ -213,8 +219,9 @@ export default function LiveStream() {
 
         {/* Live chat */}
         <div className="w-80 flex flex-col border-l border-zinc-800 bg-[#0f0f0f]">
-          <div className="p-3 border-b border-zinc-800">
+          <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
             <h3 className="text-white font-semibold text-sm">Live chat</h3>
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} title={socketConnected ? 'Connected' : 'Connecting...'} />
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
