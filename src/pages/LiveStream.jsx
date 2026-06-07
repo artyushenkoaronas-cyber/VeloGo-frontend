@@ -264,23 +264,35 @@ export default function LiveStream() {
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
-            {chat.map((msg, i) => (
-              <div key={msg.id || i} className="flex gap-2 items-start">
-                <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 overflow-hidden">
-                  {msg.user?.avatar
-                    ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
-                    : msg.user?.name?.[0]?.toUpperCase() || '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {msg.user?.isFounder && <FounderBadge size={13} />}
-                    <span className="text-blue-400 text-xs font-medium">{msg.user?.name || msg.user?.username}</span>
-                    {msg.user?.isVerified && <VerifiedBadge size={11} full />}
+            {chat.map((msg, i) => {
+              const isOwner = msg.user?.username === me.username;
+              const nameColor = msg.user?.isFounder
+                ? 'text-yellow-400'
+                : isOwner
+                  ? 'text-blue-400'
+                  : 'text-white';
+              return (
+                <div key={msg.id || i} className="flex gap-2 items-start">
+                  <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0 overflow-hidden">
+                    {msg.user?.avatar
+                      ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
+                      : msg.user?.name?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <span className="text-white text-xs break-words">{msg.message}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {msg.user?.isFounder && <FounderBadge size={13} />}
+                      <span className={`text-xs font-semibold ${nameColor}`}>{msg.user?.name || msg.user?.username}</span>
+                      {msg.user?.isVerified && (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="text-zinc-400 flex-shrink-0">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-zinc-200 text-xs break-words">{msg.message}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={chatEndRef} />
           </div>
           {stream?.chatMode !== 'none' && (
