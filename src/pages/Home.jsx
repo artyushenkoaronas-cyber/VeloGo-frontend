@@ -35,7 +35,9 @@ export default function Home() {
   const fetchLives = async () => {
     try {
       const { data } = await api.get('/api/lives');
-      setLiveStreams(data.filter(s => s.isLive));
+      // Show streams that are live OR started within last 10 minutes (waiting to go live)
+      const recent = Date.now() - 10 * 60 * 1000;
+      setLiveStreams(data.filter(s => s.isLive || (!s.endedAt && new Date(s.createdAt) > new Date(recent))));
     } catch {}
   };
 

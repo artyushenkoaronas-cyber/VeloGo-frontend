@@ -9,7 +9,6 @@ import VideoCard from '../components/VideoCard';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
-import MazeBadge from '../components/MazeBadge';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Live', 'Playlists', 'Posts'];
 
@@ -199,7 +198,6 @@ const { username } = useParams();
             </div>
             <div className="pb-2 flex-1">
               <div className="flex items-center gap-2">
-                {channel?.isFounder && <MazeBadge size={22} />}
                 {channel?.isFounder && <FounderBadge size={22} />}
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
                 {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}

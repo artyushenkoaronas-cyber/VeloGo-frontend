@@ -6,7 +6,6 @@ import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import { mediaUrl } from '../utils/mediaUrl';
 import FounderBadge from '../components/FounderBadge';
-import MazeBadge from '../components/MazeBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
@@ -159,7 +158,6 @@ export default function WatchLive() {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  {streamer?.isFounder && <MazeBadge size={16} />}
                   {streamer?.isFounder && <FounderBadge size={16} />}
                   <span
                     className="text-white font-medium text-sm cursor-pointer hover:underline"

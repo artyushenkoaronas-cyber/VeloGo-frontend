@@ -6,7 +6,6 @@ import Navbar from '../components/Navbar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
-import MazeBadge from '../components/MazeBadge';
 import SaveToPlaylistModal from '../components/SaveToPlaylistModal';
 import SendToDMModal from '../components/SendToDMModal';
 import CommentsSection from '../components/CommentsSection';
@@ -273,7 +272,6 @@ export default function Watch() {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button onClick={() => goChannel(video.uploader)}
                     className="flex items-center gap-1 hover:opacity-80 transition">
-                    {video.uploader?.isFounder && <MazeBadge size={16} />}
                     {video.uploader?.isFounder && <FounderBadge size={16} />}
                     <p className="text-white text-sm font-medium">{video.uploader?.name}</p>
                     {video.uploader?.isOfficialArtist && <OfficialArtistBadge size={16} />}

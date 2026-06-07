@@ -7,7 +7,6 @@ import Sidebar from '../components/Sidebar';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
-import MazeBadge from '../components/MazeBadge';
 import VideoCard from '../components/VideoCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import BgCropModal from '../components/BgCropModal';
@@ -258,7 +257,6 @@ export default function Channel() {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    {user.isFounder && <MazeBadge size={22} />}
                     {user.isFounder && <FounderBadge size={22} />}
                     <h1 className="text-white text-2xl font-bold">{user.name}</h1>
                     {user.isOfficialArtist && <OfficialArtistBadge size={22} />}

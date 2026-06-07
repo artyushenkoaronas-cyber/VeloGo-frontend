@@ -5,7 +5,6 @@ import api from '../utils/api';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
 import FounderBadge from './FounderBadge';
-import MazeBadge from './MazeBadge';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -249,7 +248,6 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
             onClick={() => c.author?.username && navigate(`/c/${c.author?.channelToken || c.author?._id}`)}
             className="flex items-center gap-1 hover:opacity-80 transition"
           >
-            {c.author?.isFounder && <MazeBadge size={14} />}
             {c.author?.isFounder && <FounderBadge size={14} />}
             <span className="text-white text-sm font-medium">@{c.author?.username || c.author?.name}</span>
             {c.author?.isOfficialArtist && <OfficialArtistBadge size={13} />}
