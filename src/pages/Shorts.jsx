@@ -177,6 +177,14 @@ function ShortItem({ short, isActive, token, me, navigate }) {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [showCollab, setShowCollab] = useState(false);
+  const [paused, setPaused] = useState(false);
+
+  const togglePause = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) { el.play().catch(() => {}); setPaused(false); }
+    else { el.pause(); setPaused(true); }
+  };
   const [collabInput, setCollabInput] = useState('');
   const [collabMsg, setCollabMsg] = useState('');
   const headers = { Authorization: `Bearer ${token}` };
@@ -195,6 +203,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     if (isActive) {
       el.currentTime = trimStart;
       el.play().catch(() => {});
+      setPaused(false);
     } else {
       el.pause();
       el.currentTime = trimStart;
@@ -264,9 +273,21 @@ function ShortItem({ short, isActive, token, me, navigate }) {
         loop
         muted={muted}
         playsInline
-        className="h-full max-w-[400px] w-full object-cover"
+        onClick={togglePause}
+        className="h-full max-w-[400px] w-full object-cover cursor-pointer"
         style={{ maxHeight: '100vh' }}
       />
+
+      {/* Pause indicator */}
+      {paused && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none max-w-[400px] mx-auto">
+          <div className="bg-black/50 rounded-full p-4">
+            <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+          </div>
+        </div>
+      )}
 
       {/* Gradient overlays */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none max-w-[400px] mx-auto" />
