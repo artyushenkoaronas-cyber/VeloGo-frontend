@@ -133,6 +133,8 @@ export default function WatchLive() {
           drainingRef.current = false;
           drainQueue();
         });
+        // Drain any chunks that arrived before MediaSource was ready
+        drainQueue();
       } catch (e) {
         console.warn('addSourceBuffer error', e);
       }
@@ -140,7 +142,8 @@ export default function WatchLive() {
   }, [loading, ended]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = chatEndRef.current;
+    if (el) el.scrollIntoView({ behavior: 'auto' });
   }, [chat]);
 
   const sendChat = (e) => {

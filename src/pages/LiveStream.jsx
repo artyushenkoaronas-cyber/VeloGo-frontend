@@ -73,7 +73,8 @@ export default function LiveStream() {
   }, [id]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = chatEndRef.current;
+    if (el) el.scrollIntoView({ behavior: 'auto' });
   }, [chat]);
 
   const startCamera = async () => {
