@@ -49,6 +49,7 @@ export default function WatchLive() {
     }
   };
 
+  // Fetch stream info + set up socket
   useEffect(() => {
     api.get(`/api/lives/${id}`).then(r => {
       const data = r.data;
@@ -59,29 +60,6 @@ export default function WatchLive() {
       setLoading(false);
       setEnded(true);
     });
-
-    // Set up MediaSource for video playback
-    if (typeof MediaSource !== 'undefined') {
-      const ms = new MediaSource();
-      msRef.current = ms;
-      if (videoRef.current) {
-        videoRef.current.src = URL.createObjectURL(ms);
-      }
-      ms.addEventListener('sourceopen', () => {
-        const mimeType = 'video/webm;codecs=vp8,opus';
-        if (!MediaSource.isTypeSupported(mimeType)) return;
-        try {
-          const sb = ms.addSourceBuffer(mimeType);
-          sbRef.current = sb;
-          sb.addEventListener('updateend', () => {
-            drainingRef.current = false;
-            drainQueue();
-          });
-        } catch (e) {
-          console.warn('addSourceBuffer error', e);
-        }
-      });
-    }
 
     // polling first — more reliable through proxies/firewalls
     const socket = io(BACKEND, {
@@ -107,10 +85,15 @@ export default function WatchLive() {
 
     socket.on('live:chunk', (chunk) => {
       if (!sbRef.current) return;
+      // Normalize chunk to ArrayBuffer regardless of how socket.io delivers it
       let buf;
-      if (chunk instanceof ArrayBuffer) buf = chunk;
-      else if (chunk instanceof Uint8Array) buf = chunk.buffer;
-      else return;
+      if (chunk instanceof ArrayBuffer) {
+        buf = chunk;
+      } else if (ArrayBuffer.isView(chunk)) {
+        buf = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+      } else {
+        return;
+      }
       queueRef.current.push(buf);
       drainQueue();
       if (videoRef.current && videoRef.current.paused && videoRef.current.readyState >= 2) {
@@ -127,6 +110,34 @@ export default function WatchLive() {
       }
     };
   }, [id]);
+
+  // Set up MediaSource AFTER loading is done so videoRef.current exists in the DOM
+  useEffect(() => {
+    if (loading || ended) return;
+    if (typeof MediaSource === 'undefined') return;
+    if (!videoRef.current) return;
+
+    const ms = new MediaSource();
+    msRef.current = ms;
+    videoRef.current.src = URL.createObjectURL(ms);
+
+    ms.addEventListener('sourceopen', () => {
+      // Try codecs in order of preference
+      const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+        .find(m => MediaSource.isTypeSupported(m));
+      if (!mimeType) return;
+      try {
+        const sb = ms.addSourceBuffer(mimeType);
+        sbRef.current = sb;
+        sb.addEventListener('updateend', () => {
+          drainingRef.current = false;
+          drainQueue();
+        });
+      } catch (e) {
+        console.warn('addSourceBuffer error', e);
+      }
+    });
+  }, [loading, ended]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

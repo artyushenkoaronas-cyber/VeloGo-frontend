@@ -55,10 +55,14 @@ export default function LiveStream() {
 
     socket.on('connect', () => {
       setSocketConnected(true);
+      // Emit live:start so server tracks streamer socket + joins room
       socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder } });
+      // Also join as viewer so we receive chat_history and live:chat broadcasts
+      socket.emit('live:join', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder } });
     });
     socket.on('disconnect', () => setSocketConnected(false));
     socket.on('live:viewers', count => setViewers(count));
+    socket.on('live:chat_history', msgs => setChat(msgs));
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
 
     return () => {
