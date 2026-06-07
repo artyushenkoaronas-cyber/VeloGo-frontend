@@ -5,6 +5,7 @@ import api from '../utils/api';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
+import MazeBadge from '../components/MazeBadge';
 import UploadModal from '../components/UploadModal';
 
 function fv(n) {
@@ -309,8 +310,9 @@ function ShortItem({ short, isActive, token, me, navigate }) {
               onClick={() => navigate(`/c/${short.uploader?.channelToken || short.uploader?._id}`)}
               className="flex items-center gap-1 hover:opacity-80 transition"
             >
+              {short.uploader?.isFounder && <MazeBadge size={14} />}
+              {short.uploader?.isFounder && <FounderBadge size={14} />}
               <span className="text-white text-sm font-semibold">@{short.uploader?.username || short.uploader?.name}</span>
-              {short.uploader?.isFounder && <FounderBadge size={13} />}
               {short.uploader?.isOfficialArtist && <OfficialArtistBadge size={13} />}
               {short.uploader?.isVerified && <VerifiedBadge size={13} full />}
             </button>

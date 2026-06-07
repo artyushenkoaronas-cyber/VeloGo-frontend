@@ -3,49 +3,45 @@ export default function MazeBadge({ size = 20 }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 20 20"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' }}
     >
-      {/* Outer glow ring */}
-      <circle cx="10" cy="10" r="9.5" fill="#581c87" />
-      <circle cx="10" cy="10" r="9" fill="#7c3aed" />
-      <circle cx="10" cy="10" r="8.2" fill="#6d28d9" />
+      {/* Background square with rounded corners */}
+      <rect width="100" height="100" rx="18" fill="#2a2a2a" />
 
-      {/* Maze pattern inside */}
-      {/* Outer maze border segments */}
-      <rect x="3" y="3" width="14" height="1.2" rx="0.4" fill="#e9d5ff" />
-      <rect x="3" y="15.8" width="14" height="1.2" rx="0.4" fill="#e9d5ff" />
-      <rect x="3" y="3" width="1.2" height="14" rx="0.4" fill="#e9d5ff" />
-      <rect x="15.8" y="3" width="1.2" height="14" rx="0.4" fill="#e9d5ff" />
+      {/* Maze / labyrinth pattern — square spiral (Greek key style) */}
+      {/* Outer frame top */}
+      <rect x="10" y="10" width="80" height="10" rx="3" fill="#e0e0e0" />
+      {/* Outer frame left */}
+      <rect x="10" y="10" width="10" height="80" rx="3" fill="#e0e0e0" />
+      {/* Outer frame bottom */}
+      <rect x="10" y="80" width="80" height="10" rx="3" fill="#e0e0e0" />
+      {/* Outer frame right — gap at top-right for entry */}
+      <rect x="80" y="30" width="10" height="60" rx="3" fill="#e0e0e0" />
 
-      {/* Inner maze walls */}
-      {/* Top-left block */}
-      <rect x="5" y="5" width="3.5" height="1" rx="0.3" fill="#c4b5fd" />
-      <rect x="5" y="5" width="1" height="4" rx="0.3" fill="#c4b5fd" />
+      {/* Second ring top — gap on right */}
+      <rect x="20" y="20" width="50" height="10" rx="3" fill="#e0e0e0" />
+      {/* Second ring left — gap at bottom */}
+      <rect x="20" y="20" width="10" height="50" rx="3" fill="#e0e0e0" />
+      {/* Second ring bottom */}
+      <rect x="20" y="70" width="60" height="10" rx="3" fill="#e0e0e0" />
+      {/* Second ring right */}
+      <rect x="70" y="40" width="10" height="30" rx="3" fill="#e0e0e0" />
 
-      {/* Top-right area */}
-      <rect x="11.5" y="5" width="3.5" height="1" rx="0.3" fill="#c4b5fd" />
-      <rect x="14" y="5" width="1" height="3.5" rx="0.3" fill="#c4b5fd" />
+      {/* Third ring top */}
+      <rect x="30" y="30" width="30" height="10" rx="3" fill="#e0e0e0" />
+      {/* Third ring right */}
+      <rect x="30" y="30" width="10" height="30" rx="3" fill="#e0e0e0" />
+      {/* Third ring bottom — gap on left */}
+      <rect x="40" y="60" width="30" height="10" rx="3" fill="#e0e0e0" />
+      {/* Third ring right side */}
+      <rect x="60" y="40" width="10" height="20" rx="3" fill="#e0e0e0" />
 
-      {/* Middle cross */}
-      <rect x="7" y="8.5" width="6" height="1" rx="0.3" fill="#fde68a" />
-      <rect x="9.5" y="7" width="1" height="6" rx="0.3" fill="#fde68a" />
-
-      {/* Bottom-left */}
-      <rect x="5" y="11.5" width="1" height="3.5" rx="0.3" fill="#c4b5fd" />
-      <rect x="5" y="14" width="3.5" height="1" rx="0.3" fill="#c4b5fd" />
-
-      {/* Bottom-right */}
-      <rect x="14" y="11.5" width="1" height="4" rx="0.3" fill="#c4b5fd" />
-      <rect x="11.5" y="14" width="3.5" height="1" rx="0.3" fill="#c4b5fd" />
-
-      {/* Center dot */}
-      <circle cx="10" cy="10" r="1" fill="#fde68a" />
-
-      {/* Shine */}
-      <path d="M5 4 Q8 3.5 9 5 Q7 5 5 4Z" fill="rgba(255,255,255,0.2)" />
+      {/* Inner core */}
+      <rect x="40" y="40" width="15" height="10" rx="3" fill="#e0e0e0" />
+      <rect x="40" y="40" width="10" height="15" rx="3" fill="#e0e0e0" />
     </svg>
   );
 }
