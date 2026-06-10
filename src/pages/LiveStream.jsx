@@ -65,7 +65,31 @@ export default function LiveStream() {
     socket.on('live:chat_history', msgs => setChat(msgs));
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
 
+    // Warn user before closing tab/window while streaming
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = 'Stream is still live. Are you sure you want to leave?';
+      return e.returnValue;
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // When tab actually closes — end stream in DB (keepalive fetch fires even on tab close)
+    const handleUnload = () => {
+      if (socketRef.current) {
+        socketRef.current.emit('live:end', { streamId: id });
+      }
+      const token = localStorage.getItem('velogo_token');
+      fetch(`${BACKEND}/api/lives/${id}/end`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        keepalive: true,
+      }).catch(() => {});
+    };
+    window.addEventListener('unload', handleUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
       socket.disconnect();
       recorderRef.current?.stop();
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
