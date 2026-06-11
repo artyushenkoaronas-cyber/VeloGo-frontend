@@ -106,7 +106,7 @@ export default function Sidebar({ open }) {
           Redeem code
         </button>
 
-        <button onClick={() => navigate('/redeem')}
+        <button onClick={() => navigate('/gift-cards')}
           className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition text-sm font-medium
             bg-gradient-to-r from-red-600/20 to-red-800/10 hover:from-red-600/30 hover:to-red-800/20
             border border-red-600/30 text-white`}>

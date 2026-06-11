@@ -33,6 +33,7 @@ import GoLive from './pages/GoLive';
 import LiveStream from './pages/LiveStream';
 import WatchLive from './pages/WatchLive';
 import Redeem from './pages/Redeem';
+import GiftCards from './pages/GiftCards';
 
 
 const PrivateRoute = ({ children }) => {
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/live/:id" element={<PrivateRoute><LiveStream /></PrivateRoute>} />
         <Route path="/watch-live/:id" element={<WatchLive />} />
         <Route path="/redeem" element={<PrivateRoute><Redeem /></PrivateRoute>} />
+        <Route path="/gift-cards" element={<PrivateRoute><GiftCards /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>
