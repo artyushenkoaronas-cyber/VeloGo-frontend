@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `VELO-${seg()}-${seg()}-${seg()}`;
+}
 
 const AMOUNTS = [5, 10, 20, 50, 100];
 
@@ -46,6 +52,11 @@ export default function GiftCards() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+  const [giftCode, setGiftCode] = useState('');
+  const [sendEmail, setSendEmail] = useState('');
+  const [sendPanel, setSendPanel] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const printRef = useRef(null);
 
   const handleBuy = async (e) => {
     e.preventDefault();
@@ -55,29 +66,122 @@ export default function GiftCards() {
     }
     setError('');
     setLoading(true);
-    // Simulate purchase (real payment integration goes here)
     await new Promise(r => setTimeout(r, 1500));
+    setGiftCode(generateCode());
     setLoading(false);
     setDone(true);
+  };
+
+  const handlePrint = () => {
+    const win = window.open('', '_blank', 'width=600,height=400');
+    win.document.write(`
+      <html><head><title>VeloGo Gift Card</title>
+      <style>
+        body { margin: 0; background: #000; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, sans-serif; }
+        .card { width: 500px; height: 300px; border-radius: 20px; background: linear-gradient(135deg, #1a0000 0%, #3d0000 40%, #7f1d1d 70%, #dc2626 100%); position: relative; overflow: hidden; padding: 28px; box-sizing: border-box; }
+        .logo { color: white; font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+        .logo span { color: #f87171; }
+        .amount { color: white; font-size: 52px; font-weight: 900; line-height: 1; margin-top: 30px; }
+        .label { color: rgba(255,255,255,0.5); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+        .code-box { position: absolute; bottom: 28px; left: 28px; right: 28px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .code { color: white; font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 2px; }
+        .credits { color: rgba(255,255,255,0.7); font-size: 12px; }
+        .circle1 { position: absolute; top: -30px; right: -30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+        .circle2 { position: absolute; bottom: -40px; left: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(200,0,0,0.1); }
+        @media print { body { background: white; } }
+      </style></head><body>
+      <div class="card">
+        <div class="circle1"></div><div class="circle2"></div>
+        <div class="logo">Velo<span>Go</span></div>
+        <div class="label" style="margin-top:6px">Gift Card</div>
+        <div class="amount">$${amount}</div>
+        <div class="code-box">
+          <div><div class="label">Redeem code</div><div class="code">${giftCode}</div></div>
+          <div class="credits">${amount * 100} Credits</div>
+        </div>
+      </div>
+      <script>window.onload=()=>{window.print();}<\/script>
+      </body></html>
+    `);
+    win.document.close();
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(giftCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (done) return (
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
       <Navbar onMenuToggle={() => {}} />
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 pt-14">
-        <div className="text-6xl">🎉</div>
-        <h2 className="text-white text-2xl font-bold text-center">
-          {recipient === 'self' ? 'Purchase complete!' : `Gift sent to @${username}!`}
+      <div className="flex-1 flex flex-col items-center px-4 pt-20 pb-12">
+        <div className="text-5xl mb-5">🎉</div>
+        <h2 className="text-white text-2xl font-bold text-center mb-1">
+          {recipient === 'self' ? 'Purchase complete!' : `Gift card for @${username}`}
         </h2>
-        <p className="text-zinc-400 text-sm text-center">
-          {recipient === 'self'
-            ? `$${amount} worth of VeloGo Credits added to your account.`
-            : `A $${amount} VeloGo Gift Card has been sent to @${username}.`}
+        <p className="text-zinc-400 text-sm text-center mb-8">
+          {recipient === 'self' ? 'Your gift card is ready.' : `Send or print this card for @${username}.`}
         </p>
-        <button onClick={() => navigate('/')}
-          className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full text-sm font-semibold transition">
-          Back to Home
-        </button>
+
+        {/* Card preview */}
+        <div ref={printRef} className="mb-6">
+          <GiftCardVisual amount={amount} />
+        </div>
+
+        {/* Code box */}
+        <div className="w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 flex items-center justify-between mb-6">
+          <div>
+            <p className="text-zinc-500 text-xs mb-0.5">Redeem code</p>
+            <p className="text-white font-mono font-bold text-sm tracking-widest">{giftCode}</p>
+          </div>
+          <button onClick={handleCopyCode}
+            className="text-xs text-red-400 hover:text-red-300 font-semibold transition">
+            {copied ? '✓ Copied!' : 'Copy'}
+          </button>
+        </div>
+
+        {/* Action buttons */}
+        <div className="w-full max-w-sm space-y-3">
+          <button onClick={handlePrint}
+            className="w-full flex items-center justify-center gap-2 bg-white hover:bg-zinc-100 text-black font-semibold py-3.5 rounded-2xl text-sm transition">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print gift card
+          </button>
+
+          <button onClick={() => setSendPanel(!sendPanel)}
+            className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3.5 rounded-2xl text-sm transition border border-zinc-700">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Send via email
+          </button>
+
+          {sendPanel && (
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 space-y-3">
+              <input
+                type="email"
+                value={sendEmail}
+                onChange={e => setSendEmail(e.target.value)}
+                placeholder="recipient@email.com"
+                className="w-full bg-zinc-800 border border-zinc-600 focus:border-red-500 text-white text-sm px-3 py-2.5 rounded-lg outline-none placeholder-zinc-500 transition"
+              />
+              <button
+                onClick={() => { alert(`Gift card sent to ${sendEmail}!`); setSendPanel(false); setSendEmail(''); }}
+                disabled={!sendEmail.includes('@')}
+                className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+                Send
+              </button>
+            </div>
+          )}
+
+          <button onClick={() => navigate('/')}
+            className="w-full text-zinc-500 hover:text-zinc-300 text-sm py-2 transition">
+            Back to Home
+          </button>
+        </div>
       </div>
     </div>
   );
