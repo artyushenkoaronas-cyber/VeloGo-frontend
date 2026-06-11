@@ -52,8 +52,8 @@ export default function VeloPlus() {
       }, { headers: { Authorization: `Bearer ${token}` } });
       setStep('success');
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong.');
-      setStep('plans');
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      // stay on confirm page so user sees the error
     } finally {
       setLoading(false);
     }
