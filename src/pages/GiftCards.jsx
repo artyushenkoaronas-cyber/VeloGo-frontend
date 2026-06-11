@@ -57,6 +57,9 @@ export default function GiftCards() {
   const [sendEmail, setSendEmail] = useState('');
   const [sendPanel, setSendPanel] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState('');
   const printRef = useRef(null);
 
   const handleBuy = async (e) => {
@@ -179,11 +182,31 @@ export default function GiftCards() {
                 placeholder="recipient@email.com"
                 className="w-full bg-zinc-800 border border-zinc-600 focus:border-red-500 text-white text-sm px-3 py-2.5 rounded-lg outline-none placeholder-zinc-500 transition"
               />
+              {sendError && <p className="text-red-400 text-xs">{sendError}</p>}
+              {sendSuccess && <p className="text-green-400 text-xs">✓ Gift card sent successfully!</p>}
               <button
-                onClick={() => { alert(`Gift card sent to ${sendEmail}!`); setSendPanel(false); setSendEmail(''); }}
-                disabled={!sendEmail.includes('@')}
-                className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition">
-                Send
+                onClick={async () => {
+                  if (!sendEmail.includes('@')) return;
+                  setSending(true);
+                  setSendError('');
+                  setSendSuccess(false);
+                  try {
+                    const token = localStorage.getItem('velogo_token');
+                    await api.post('/api/gift-cards/send-email', { to: sendEmail, code: giftCode, amount }, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setSendSuccess(true);
+                    setSendEmail('');
+                    setTimeout(() => { setSendPanel(false); setSendSuccess(false); }, 2500);
+                  } catch (err) {
+                    setSendError(err.response?.data?.message || 'Failed to send. Please try again.');
+                  } finally {
+                    setSending(false);
+                  }
+                }}
+                disabled={!sendEmail.includes('@') || sending}
+                className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2">
+                {sending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending...</> : 'Send'}
               </button>
             </div>
           )}
