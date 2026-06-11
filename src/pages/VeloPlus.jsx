@@ -38,6 +38,7 @@ export default function VeloPlus() {
       return;
     }
     setError('');
+    setLoading(false);
     setStep('confirm');
   };
 
@@ -85,7 +86,7 @@ export default function VeloPlus() {
       <Navbar onMenuToggle={() => {}} />
       <div className="flex-1 flex flex-col items-center justify-center px-4 pt-14">
         <div className="w-full max-w-sm">
-          <button onClick={() => setStep('plans')} className="text-zinc-400 hover:text-white text-sm mb-6 flex items-center gap-1 transition">
+          <button onClick={() => { setStep('plans'); setError(''); }} className="text-zinc-400 hover:text-white text-sm mb-6 flex items-center gap-1 transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
           </button>
@@ -145,7 +146,7 @@ export default function VeloPlus() {
         {/* Plan selector */}
         <div className="w-full max-w-sm space-y-3 mb-6">
           {PLANS.map(p => (
-            <button key={p.id} onClick={() => setPlan(p.id)}
+            <button key={p.id} onClick={() => { setPlan(p.id); setError(''); }}
               className={`w-full flex items-center justify-between px-4 py-4 rounded-2xl border transition ${
                 plan === p.id
                   ? 'bg-red-600/10 border-red-500 text-white'
@@ -174,11 +175,11 @@ export default function VeloPlus() {
         <div className="w-full max-w-sm mb-4">
           <p className="text-white text-sm font-semibold mb-3">Who is it for?</p>
           <div className="grid grid-cols-2 gap-2 bg-zinc-900 p-1 rounded-xl border border-zinc-700 mb-3">
-            <button onClick={() => setRecipient('self')}
+            <button onClick={() => { setRecipient('self'); setError(''); }}
               className={`py-2.5 rounded-lg text-sm font-medium transition ${recipient === 'self' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
               🙋 For me
             </button>
-            <button onClick={() => setRecipient('friend')}
+            <button onClick={() => { setRecipient('friend'); setError(''); }}
               className={`py-2.5 rounded-lg text-sm font-medium transition ${recipient === 'friend' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
               🎁 Gift a friend
             </button>
