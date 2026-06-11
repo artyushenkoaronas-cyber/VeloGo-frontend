@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import api from '../utils/api';
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -66,8 +67,18 @@ export default function GiftCards() {
     }
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setGiftCode(generateCode());
+    const code = generateCode();
+    try {
+      const token = localStorage.getItem('velogo_token');
+      // Save code to DB so it can be redeemed
+      await api.post('/api/redeem/generate', { code, amount }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (e) {
+      // Even if save fails, show the code (can be created manually by admin)
+      console.warn('Could not save gift code to DB', e);
+    }
+    setGiftCode(code);
     setLoading(false);
     setDone(true);
   };
