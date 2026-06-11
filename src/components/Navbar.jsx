@@ -460,6 +460,7 @@ function ProfileMenu({ user, initial, navigate, onClose, onLogout, lang, switchL
       <div className="py-2 border-b border-zinc-700">
         {user?.isAdmin && <MenuItem icon={<StudioIcon />} label={t('adminPanel')} onClick={() => go('/admin')} />}
         <MenuItem icon={<PurchasesIcon />} label={t('purchases')} />
+        <MenuItem icon={<RedeemIcon />} label="Redeem code" onClick={() => go('/redeem')} />
       </div>
       <div className="py-2 border-b border-zinc-700">
         <MenuItem icon={<AppearanceIcon theme={theme} />} label={theme === 'dark' ? t('appearanceDark') : t('appearanceLight')} onClick={toggleTheme} />
@@ -478,6 +479,7 @@ const GoogleIcon = () => <svg viewBox="0 0 24 24" className="w-5 h-5"><path fill
 const SwitchIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 const SignOutIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
 const StudioIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>;
+const RedeemIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 014-4 2 2 0 010 4H12zm0 0V6a4 4 0 00-4-4 2 2 0 000 4h4zM5 8h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1zm1 4v8a1 1 0 001 1h10a1 1 0 001-1v-8" /></svg>;
 const PurchasesIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const AppearanceIcon = ({ theme }) => theme === 'dark'
   ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
