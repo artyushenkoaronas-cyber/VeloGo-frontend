@@ -115,6 +115,15 @@ export default function Sidebar({ open }) {
           </svg>
           Buy Gift Cards
         </button>
+
+        {/* VeloGo Plus */}
+        <button
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition text-sm font-bold
+            bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600
+            text-white shadow-lg shadow-red-900/30 mt-1">
+          <span className="w-5 h-5 flex-shrink-0 flex items-center justify-center bg-white/20 rounded-md text-xs font-black leading-none">V</span>
+          VeloGo Plus
+        </button>
       </div>
     </aside>
   );
