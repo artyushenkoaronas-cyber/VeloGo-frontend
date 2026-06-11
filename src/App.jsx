@@ -32,6 +32,7 @@ import Remix from './pages/Remix';
 import GoLive from './pages/GoLive';
 import LiveStream from './pages/LiveStream';
 import WatchLive from './pages/WatchLive';
+import Redeem from './pages/Redeem';
 
 
 const PrivateRoute = ({ children }) => {
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/go-live" element={<PrivateRoute><GoLive /></PrivateRoute>} />
         <Route path="/live/:id" element={<PrivateRoute><LiveStream /></PrivateRoute>} />
         <Route path="/watch-live/:id" element={<WatchLive />} />
+        <Route path="/redeem" element={<PrivateRoute><Redeem /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>
