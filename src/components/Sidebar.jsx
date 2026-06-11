@@ -93,6 +93,29 @@ export default function Sidebar({ open }) {
           </button>
         ))}
       </div>
+
+      <div className="border-t border-zinc-800 mx-3 my-2" />
+
+      {/* Gift Cards & Redeem */}
+      <div className="px-3 py-2 space-y-1">
+        <button onClick={() => navigate('/redeem')}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-zinc-800 transition text-gray-300 text-sm">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+          </svg>
+          Redeem code
+        </button>
+
+        <button onClick={() => navigate('/redeem')}
+          className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition text-sm font-medium
+            bg-gradient-to-r from-red-600/20 to-red-800/10 hover:from-red-600/30 hover:to-red-800/20
+            border border-red-600/30 text-white`}>
+          <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 014-4 2 2 0 010 4H12zm0 0V6a4 4 0 00-4-4 2 2 0 000 4h4zM5 8h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1zm1 4v8a1 1 0 001 1h10a1 1 0 001-1v-8" />
+          </svg>
+          Buy Gift Cards
+        </button>
+      </div>
     </aside>
   );
 }
