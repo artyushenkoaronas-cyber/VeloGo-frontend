@@ -6,6 +6,7 @@ import api from '../utils/api';
 import { mediaUrl } from '../utils/mediaUrl';
 import FounderBadge from '../components/FounderBadge';
 import VerifiedBadge from '../components/VerifiedBadge';
+import VeloPlusBadge from '../components/VeloPlusBadge';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'https://velogo.onrender.com';
 
@@ -304,7 +305,8 @@ export default function LiveStream() {
                       : msg.user?.name?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="text-xs leading-5 break-words min-w-0">
-                    {msg.user?.isFounder && <FounderBadge size={12} />}{' '}
+                    {msg.user?.isFounder && <FounderBadge size={12} />}
+                    {msg.user?.isVeloPlus && <VeloPlusBadge size={12} />}{' '}
                     <span className="font-semibold" style={{ color: msg.user?.isFounder ? '#facc15' : isOwner ? '#60a5fa' : '#ffffff' }}>{msg.user?.name || msg.user?.username}</span>
                     {msg.user?.isVerified && (
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="inline text-zinc-400 ml-0.5 -mt-0.5">

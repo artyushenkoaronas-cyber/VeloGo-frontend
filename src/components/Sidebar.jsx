@@ -1,5 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 
+const VeloPlusBadgeInline = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+    <path d="M12 2L21.5 7.5V16.5L12 22L2.5 16.5V7.5L12 2Z" stroke="white" strokeWidth="1.6" fill="none" />
+    <text x="12" y="15.5" textAnchor="middle" fontSize="7.5" fontWeight="800" fontFamily="system-ui" fill="white" letterSpacing="-0.5">V+</text>
+  </svg>
+);
+
 const mainItems = [
   {
     icon: <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>,
@@ -117,11 +124,11 @@ export default function Sidebar({ open }) {
         </button>
 
         {/* VeloGo Plus */}
-        <button
+        <button onClick={() => navigate('/veloplus')}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition text-sm font-bold
             bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600
             text-white shadow-lg shadow-red-900/30 mt-1">
-          <span className="w-5 h-5 flex-shrink-0 flex items-center justify-center bg-white/20 rounded-md text-xs font-black leading-none">V</span>
+          <VeloPlusBadgeInline />
           VeloGo Plus
         </button>
       </div>
