@@ -19,9 +19,14 @@ const FEATURES = [
   '⭐ Priority support',
 ];
 
+function safeUser() {
+  try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; }
+}
+
 export default function VeloPlus() {
   const navigate = useNavigate();
   const token = localStorage.getItem('velogo_token');
+  const me = safeUser();
 
   const [plan, setPlan] = useState('monthly');
   const [recipient, setRecipient] = useState('self');
@@ -59,6 +64,39 @@ export default function VeloPlus() {
       setLoading(false);
     }
   };
+
+  // Already has active subscription
+  const hasActive = me.isVeloPlus && me.veloPlusExpiry && new Date() < new Date(me.veloPlusExpiry);
+  if (hasActive && step !== 'success') return (
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
+      <Navbar onMenuToggle={() => {}} />
+      <div className="flex-1 flex flex-col items-center justify-center gap-5 px-4 pt-14">
+        <div className="w-20 h-20 rounded-full bg-red-600/20 flex items-center justify-center">
+          <VeloPlusBadge size={40} />
+        </div>
+        <h2 className="text-white text-2xl font-bold text-center">You're already a member!</h2>
+        <p className="text-zinc-400 text-sm text-center max-w-xs">
+          Your <span className="text-white font-semibold capitalize">{me.veloPlusPlan || 'VeloGo Plus'}</span> plan is active until{' '}
+          <span className="text-white font-semibold">
+            {new Date(me.veloPlusExpiry).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </span>.
+        </p>
+        <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-2">
+          {FEATURES.map(f => (
+            <div key={f} className="flex items-center gap-2 text-sm text-zinc-300">{f}</div>
+          ))}
+        </div>
+        <button onClick={() => navigate('/')}
+          className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full text-sm font-semibold transition">
+          Back to Home
+        </button>
+        <button onClick={() => setStep('plans')}
+          className="text-zinc-500 hover:text-zinc-300 text-xs transition">
+          Gift to a friend instead
+        </button>
+      </div>
+    </div>
+  );
 
   if (step === 'success') return (
     <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
