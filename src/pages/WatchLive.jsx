@@ -63,6 +63,7 @@ export default function WatchLive() {
   const queueRef = useRef([]);
   const drainingRef = useRef(false);
   const chatScrollRef = useRef(null);
+  const mimeTypeRef = useRef(null);
 
   const me = safeUser();
 
@@ -80,27 +81,39 @@ export default function WatchLive() {
     }
   };
 
-  // MediaSource setup — always on mount
-  useEffect(() => {
+  // Set up MediaSource — called once we know the streamer's mimeType
+  const setupMediaSource = (mimeType) => {
     if (typeof MediaSource === 'undefined') return;
+    if (!MediaSource.isTypeSupported(mimeType)) {
+      console.warn('mimeType not supported:', mimeType);
+      return;
+    }
+    // Tear down any previous MediaSource
+    if (msRef.current && msRef.current.readyState === 'open') {
+      try { msRef.current.endOfStream(); } catch {}
+    }
+    sbRef.current = null;
     const ms = new MediaSource();
     msRef.current = ms;
-    const setupSrc = () => { if (videoRef.current) videoRef.current.src = URL.createObjectURL(ms); };
-    setupSrc();
-    const raf = requestAnimationFrame(setupSrc);
+    const url = URL.createObjectURL(ms);
+    if (videoRef.current) videoRef.current.src = url;
     ms.addEventListener('sourceopen', () => {
-      const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaSource.isTypeSupported(m));
-      if (!mimeType) return;
       try {
         const sb = ms.addSourceBuffer(mimeType);
         sbRef.current = sb;
         sb.addEventListener('updateend', () => { drainingRef.current = false; drainQueue(); });
         drainQueue();
-      } catch (e) { console.warn('addSourceBuffer error', e); }
+      } catch (e) { console.warn('addSourceBuffer error:', mimeType, e); }
     });
+  };
+
+  // Pre-init MediaSource on mount with a fallback mimeType
+  useEffect(() => {
+    if (typeof MediaSource === 'undefined') return;
+    const fallback = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaSource.isTypeSupported(m));
+    if (fallback) setupMediaSource(fallback);
     return () => {
-      cancelAnimationFrame(raf);
-      if (ms.readyState === 'open') try { ms.endOfStream(); } catch {}
+      if (msRef.current && msRef.current.readyState === 'open') try { msRef.current.endOfStream(); } catch {}
     };
   }, []);
 
@@ -141,6 +154,14 @@ export default function WatchLive() {
     socket.on('live:pinned', msg => setPinnedMsg(msg));
     socket.on('live:poll', p => { setPoll(p); setVoted(false); });
     socket.on('live:poll_update', ({ options }) => setPoll(prev => prev ? { ...prev, options } : null));
+    // Re-init MediaSource with the exact codec the streamer is using
+    socket.on('live:mime', (mimeType) => {
+      if (mimeType && mimeType !== mimeTypeRef.current) {
+        mimeTypeRef.current = mimeType;
+        queueRef.current = []; // clear old queue
+        setupMediaSource(mimeType);
+      }
+    });
 
     socket.on('live:chunk', (chunk) => {
       let buf;

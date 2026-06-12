@@ -62,7 +62,8 @@ export default function LiveStream() {
     socket.on('connect', () => {
       setSocketConnected(true);
       // Emit live:start so server tracks streamer socket + joins room
-      socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder } });
+      const detectedMime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m => { try { return MediaRecorder.isTypeSupported(m); } catch { return false; } }) || 'video/webm';
+      socket.emit('live:start', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder }, mimeType: detectedMime });
       // Also join as viewer so we receive chat_history and live:chat broadcasts
       socket.emit('live:join', { streamId: id, user: { name: me.name, username: me.username, avatar: me.avatar, isFounder: me.isFounder } });
     });
