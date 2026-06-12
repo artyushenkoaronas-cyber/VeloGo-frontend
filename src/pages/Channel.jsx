@@ -32,6 +32,7 @@ export default function Channel() {
   const [videos, setVideos] = useState([]);
   const [shorts, setShorts] = useState([]);
   const [playlists, setPlaylists] = useState([]);
+  const [savedStreams, setSavedStreams] = useState([]);
   const [editPlaylist, setEditPlaylist] = useState(null); // { _id, title, visibility }
   const [trimShort, setTrimShort] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -55,6 +56,7 @@ export default function Channel() {
         setShorts(all.filter(v => v.isShort));
       }).catch(() => {});
       api.get('/api/playlists/mine', { headers }).then(r => setPlaylists(r.data)).catch(() => {});
+      api.get('/api/lives/mine', { headers }).then(r => setSavedStreams(r.data)).catch(() => {});
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
@@ -412,10 +414,24 @@ export default function Channel() {
                 </section>
               )}
               {/* Videos row */}
-              {videos.length > 0 && (
+              {(videos.length > 0 || savedStreams.length > 0) && (
                 <section>
                   <h2 className="text-white text-lg font-semibold mb-4">Videos</h2>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {savedStreams.map(s => (
+                      <div key={s._id} className="flex-shrink-0 w-56 relative group/card cursor-pointer" onClick={() => navigate(`/watch-live/${s._id}`)}>
+                        <div className="w-56 aspect-video bg-zinc-800 rounded-xl overflow-hidden relative">
+                          {s.thumbnail
+                            ? <img src={s.thumbnail} className="w-full h-full object-cover group-hover/card:scale-105 transition" alt={s.title} />
+                            : <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                                <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                              </div>}
+                          <span className="absolute bottom-1.5 left-1.5 bg-zinc-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">VOD</span>
+                        </div>
+                        <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{s.title}</p>
+                        <p className="text-gray-500 text-xs">Saved stream</p>
+                      </div>
+                    ))}
                     {videos.map(v => (
                       <div key={v._id} className="flex-shrink-0 w-56 relative group/card cursor-pointer" onClick={() => navigate(`/watch/${v._id}`)}>
                         <div className="w-56 aspect-video bg-zinc-800 rounded-xl overflow-hidden">
@@ -451,7 +467,7 @@ export default function Channel() {
                   </div>
                 </section>
               )}
-              {videos.length === 0 && shorts.length === 0 && playlists.length === 0 && (
+              {videos.length === 0 && shorts.length === 0 && playlists.length === 0 && savedStreams.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <p className="text-gray-500 text-sm">Nothing here yet. Upload a video or create a playlist.</p>
                 </div>
@@ -459,13 +475,44 @@ export default function Channel() {
             </div>
           )}
           {activeTab === 'Videos' && (
-            videos.length === 0 ? (
+            videos.length === 0 && savedStreams.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <p className="text-white font-medium mb-1">No videos yet</p>
                 <p className="text-gray-500 text-sm">Your uploaded videos will appear here.</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
+                {savedStreams.map(s => (
+                  <div key={s._id} className="relative group/card cursor-pointer" onClick={() => navigate(`/watch-live/${s._id}`)}>
+                    <div className="w-full aspect-video bg-zinc-800 rounded-xl overflow-hidden relative">
+                      {s.thumbnail
+                        ? <img src={s.thumbnail} className="w-full h-full object-cover group-hover/card:scale-105 transition" alt={s.title} />
+                        : <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                            </svg>
+                          </div>}
+                      <span className="absolute bottom-2 left-2 bg-zinc-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">VOD</span>
+                    </div>
+                    <p className="text-white text-xs font-medium mt-1.5 line-clamp-2">{s.title}</p>
+                    <p className="text-gray-500 text-xs">{s.endedAt ? new Date(s.endedAt).toLocaleDateString() : 'Saved stream'}</p>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (!confirm('Delete this saved stream?')) return;
+                        try {
+                          await api.delete(`/api/lives/${s._id}`, { headers });
+                          setSavedStreams(prev => prev.filter(x => x._id !== s._id));
+                        } catch { alert('Failed to delete'); }
+                      }}
+                      className="absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition z-10"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
                 {videos.map(v => (
                   <div key={v._id} className="relative group/card">
                     <VideoCard video={v} />
