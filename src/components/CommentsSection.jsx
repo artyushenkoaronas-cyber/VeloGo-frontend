@@ -5,6 +5,7 @@ import api from '../utils/api';
 import VerifiedBadge from './VerifiedBadge';
 import OfficialArtistBadge from './OfficialArtistBadge';
 import FounderBadge from './FounderBadge';
+import VeloPlusBadge from './VeloPlusBadge';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -249,6 +250,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
             className="flex items-center gap-1 hover:opacity-80 transition"
           >
             {c.author?.isFounder && <FounderBadge size={14} />}
+            {c.author?.isVeloPlus && <VeloPlusBadge size={14} />}
             <span className="text-white text-sm font-medium">@{c.author?.username || c.author?.name}</span>
             {c.author?.isOfficialArtist && <OfficialArtistBadge size={13} />}
             {c.author?.isVerified && <VerifiedBadge size={13} />}
@@ -349,6 +351,7 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <button onClick={() => r.author?.username && navigate(`/c/${r.author?.username}`)}
                         className="flex items-center gap-1 hover:opacity-80 transition">
+                        {r.author?.isVeloPlus && <VeloPlusBadge size={11} />}
                         <span className="text-white text-xs font-medium">@{r.author?.username || r.author?.name}</span>
                         {r.author?.isOfficialArtist && <OfficialArtistBadge size={11} />}
                         {r.author?.isVerified && <VerifiedBadge size={11} />}
