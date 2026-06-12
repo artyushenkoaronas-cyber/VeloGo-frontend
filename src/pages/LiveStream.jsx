@@ -26,6 +26,11 @@ export default function LiveStream() {
   const [ending, setEnding] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+  const [pinnedMsg, setPinnedMsg] = useState(null);
+  const [poll, setPoll] = useState(null);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
 
   const videoRef = useRef(null);
   const socketRef = useRef(null);
@@ -65,6 +70,9 @@ export default function LiveStream() {
     socket.on('live:viewers', count => setViewers(count));
     socket.on('live:chat_history', msgs => setChat(msgs));
     socket.on('live:chat', msg => setChat(prev => [...prev, msg]));
+    socket.on('live:pinned', msg => setPinnedMsg(msg));
+    socket.on('live:poll', p => setPoll(p));
+    socket.on('live:poll_update', ({ options }) => setPoll(prev => prev ? { ...prev, options } : null));
 
     // Warn user before closing tab/window while streaming
     const handleBeforeUnload = (e) => {
@@ -165,6 +173,31 @@ export default function LiveStream() {
     setChatMsg('');
   };
 
+  const pinMessage = (msg) => {
+    socketRef.current?.emit('live:pin', { streamId: id, msg });
+    setPinnedMsg(msg);
+  };
+
+  const unpinMessage = () => {
+    socketRef.current?.emit('live:unpin', { streamId: id });
+    setPinnedMsg(null);
+  };
+
+  const createPoll = () => {
+    const opts = pollOptions.filter(o => o.trim());
+    if (!pollQuestion.trim() || opts.length < 2) return;
+    socketRef.current?.emit('live:poll_create', { streamId: id, question: pollQuestion.trim(), options: opts });
+    setPollQuestion('');
+    setPollOptions(['', '']);
+    setShowPollModal(false);
+  };
+
+  const closePoll = () => {
+    socketRef.current?.emit('live:poll_close', { streamId: id });
+  };
+
+  const totalVotes = poll?.options?.reduce((s, o) => s + o.votes, 0) || 0;
+
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
@@ -191,6 +224,45 @@ export default function LiveStream() {
                 End without saving
               </button>
               <button onClick={() => setShowEndModal(false)} className="w-full text-gray-400 hover:text-white py-2 text-sm transition">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Poll creation modal */}
+      {showPollModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-[#212121] rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h2 className="text-white text-lg font-semibold mb-4">Create poll</h2>
+            <input value={pollQuestion} onChange={e => setPollQuestion(e.target.value)}
+              placeholder="Ask a question..."
+              className="w-full bg-zinc-800 text-white text-sm px-3 py-2.5 rounded-lg outline-none placeholder-zinc-500 mb-3 border border-zinc-700 focus:border-red-500" />
+            <div className="space-y-2 mb-3">
+              {pollOptions.map((opt, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <input value={opt} onChange={e => { const o = [...pollOptions]; o[i] = e.target.value; setPollOptions(o); }}
+                    placeholder={`Option ${i + 1}`}
+                    className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-zinc-500 border border-zinc-700 focus:border-red-500" />
+                  {pollOptions.length > 2 && (
+                    <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}
+                      className="text-zinc-500 hover:text-red-400 text-lg leading-none">×</button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {pollOptions.length < 4 && (
+              <button onClick={() => setPollOptions([...pollOptions, ''])}
+                className="text-red-400 text-sm mb-4 hover:text-red-300 transition">+ Add option</button>
+            )}
+            <div className="flex gap-2">
+              <button onClick={createPoll}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-full text-sm font-semibold transition">
+                Start poll
+              </button>
+              <button onClick={() => setShowPollModal(false)}
+                className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-full text-sm transition">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -246,6 +318,17 @@ export default function LiveStream() {
                 {ending ? 'Ending...' : 'End stream'}
               </button>
             )}
+            {/* Poll button — only while live */}
+            {isLive && (
+              <button onClick={() => setShowPollModal(true)}
+                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-full text-sm transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Poll
+              </button>
+            )}
+
             {/* Always show End button if stream is live in DB */}
             {!isLive && stream?.isLive && (
               <button onClick={() => setShowEndModal(true)} disabled={ending}
@@ -288,6 +371,45 @@ export default function LiveStream() {
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
             {!socketConnected && <span className="text-yellow-400 text-xs">Connecting...</span>}
           </div>
+          {/* Pinned message */}
+          {pinnedMsg && (
+            <div className="mx-3 mt-2 bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2 flex items-start gap-2">
+              <svg className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-yellow-400 text-[10px] font-semibold mb-0.5">Pinned</p>
+                <p className="text-zinc-300 text-xs break-words">
+                  <span className="font-semibold text-white">{pinnedMsg.user?.name}: </span>
+                  {pinnedMsg.message}
+                </p>
+              </div>
+              <button onClick={unpinMessage} className="text-zinc-500 hover:text-zinc-300 text-xs flex-shrink-0">×</button>
+            </div>
+          )}
+
+          {/* Active poll summary for creator */}
+          {poll && (
+            <div className="mx-3 mt-2 bg-zinc-900 border border-zinc-700 rounded-lg p-2.5">
+              <div className="flex justify-between items-center mb-1.5">
+                <p className="text-white text-xs font-semibold truncate">{poll.question}</p>
+                {poll.open && (
+                  <button onClick={closePoll} className="text-zinc-500 hover:text-red-400 text-[10px] flex-shrink-0 ml-2">Close</button>
+                )}
+              </div>
+              {poll.options?.map((opt, i) => {
+                const pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                return (
+                  <div key={i} className="flex justify-between text-[10px] text-zinc-400 mb-0.5">
+                    <span className="truncate">{opt.label}</span>
+                    <span className="ml-2 flex-shrink-0">{opt.votes} ({pct}%)</span>
+                  </div>
+                );
+              })}
+              <p className="text-zinc-600 text-[10px] mt-1">{totalVotes} total votes · {poll.open ? 'Open' : 'Closed'}</p>
+            </div>
+          )}
+
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {chat.length === 0 && <p className="text-zinc-600 text-xs text-center mt-4">No messages yet</p>}
             {chat.map((msg, i) => {
@@ -298,13 +420,13 @@ export default function LiveStream() {
                   ? 'text-blue-400'
                   : 'text-white';
               return (
-                <div key={msg.id || i} className="flex items-start gap-1.5">
+                <div key={msg.id || i} className="flex items-start gap-1.5 group">
                   <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0 overflow-hidden mt-0.5">
                     {msg.user?.avatar
                       ? <img src={mediaUrl(msg.user.avatar)} className="w-full h-full object-cover" alt="" />
                       : msg.user?.name?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <div className="text-xs leading-5 break-words min-w-0">
+                  <div className="text-xs leading-5 break-words min-w-0 flex-1">
                     {msg.user?.isFounder && <FounderBadge size={12} />}
                     {msg.user?.isVeloPlus && <VeloPlusBadge size={12} />}{' '}
                     <span className="font-semibold" style={{ color: msg.user?.isFounder ? '#facc15' : isOwner ? '#60a5fa' : '#ffffff' }}>{msg.user?.name || msg.user?.username}</span>
@@ -315,6 +437,13 @@ export default function LiveStream() {
                     )}
                     <span className="text-zinc-300">: {msg.message}</span>
                   </div>
+                  {/* Pin button — visible on hover */}
+                  <button onClick={() => pinMessage(msg)} title="Pin message"
+                    className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-zinc-500 hover:text-yellow-400 transition-opacity mt-0.5">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z" />
+                    </svg>
+                  </button>
                 </div>
               );
             })}
