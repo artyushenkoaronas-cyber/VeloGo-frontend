@@ -9,11 +9,13 @@ export default function FounderBadge({ size = 18 }) {
       style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' }}
       aria-label="Verified"
     >
-      <rect width="32" height="32" rx="8" fill="#4F85F6" />
+      {/* Square with very slight rounding like Roblox */}
+      <rect width="32" height="32" rx="4" fill="#4F85F6" />
+      {/* Tilted checkmark: pivot lower-right, right arm steep upward */}
       <path
-        d="M8 17 L13 22 L24 10"
+        d="M7 18 L14 24 L25 9"
         stroke="white"
-        strokeWidth="3"
+        strokeWidth="3.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
