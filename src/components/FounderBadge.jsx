@@ -3,21 +3,16 @@ export default function FounderBadge({ size = 18 }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' }}
       aria-label="Verified"
     >
-      {/* Roblox-style verified: blue rounded square */}
-      <rect width="24" height="24" rx="7" fill="#4F85F6" />
-      {/* Checkmark matching Roblox icon-filled-verified-check */}
+      <rect width="32" height="32" rx="8" fill="#4F85F6" />
       <path
-        d="M6 12.5 L9.5 16 L18 8"
-        stroke="white"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M21.7071 13.7071C22.0976 13.3166 22.0976 12.6834 21.7071 12.2929C21.3166 11.9024 20.6834 11.9024 20.2929 12.2929L14 18.5858L11.7071 16.2929C11.3166 15.9024 10.6834 15.9024 10.2929 16.2929C9.90237 16.6834 9.90237 17.3166 10.2929 17.7071L13.2929 20.7071C13.6834 21.0976 14.3166 21.0976 14.7071 20.7071L21.7071 13.7071Z"
+        fill="white"
       />
     </svg>
   );
