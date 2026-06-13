@@ -11,9 +11,9 @@ export default function FounderBadge({ size = 18 }) {
     >
       <rect width="20" height="20" rx="6" fill="#5B8CF5" />
       <path
-        d="M5.5 10.5 L8.5 13.5 L14.5 7"
+        d="M6 11 L9 14 L15 7"
         stroke="white"
-        strokeWidth="2.2"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
