@@ -9,11 +9,11 @@ export default function FounderBadge({ size = 18 }) {
       style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' }}
       aria-label="Verified"
     >
-      <rect width="20" height="20" rx="6" fill="#5B8CF5" />
+      <rect width="20" height="20" rx="5" fill="#5B8CF5" />
       <path
-        d="M6 11 L9 14 L15 7"
+        d="M5.5 10.2 L8.2 13 L14.5 6.5"
         stroke="white"
-        strokeWidth="2"
+        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
