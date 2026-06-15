@@ -10,7 +10,9 @@ export default function FounderBadge({ size = 18 }) {
       aria-label="Verified"
     >
       <rect width="32" height="32" rx="4" fill="#4F85F6" />
+      {/* Rotated 20deg clockwise around center */}
       <path
+        transform="rotate(20, 16, 16)"
         d="M10 16 L14 21 L22 11"
         stroke="white"
         strokeWidth="2.5"
