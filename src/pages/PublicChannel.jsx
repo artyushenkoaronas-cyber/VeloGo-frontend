@@ -198,10 +198,9 @@ const { username } = useParams();
             </div>
             <div className="pb-2 flex-1">
               <div className="flex items-center gap-2">
-                {channel?.isFounder && <FounderBadge size={22} />}
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
                 {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}
-                {channel?.isVerified && <VerifiedBadge size={22} full />}
+                {channel?.isFounder && <FounderBadge size={22} />}
               </div>
               <p className="text-gray-400 text-sm">
                 @{channel?.username} · {fv(subCount)} subscribers · {videos.length} videos
