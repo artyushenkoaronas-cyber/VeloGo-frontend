@@ -37,6 +37,8 @@ export default function GroupPage() {
 
   const isOwner = group && String(group.owner?._id || group.owner) === me.id;
 
+  const [error, setError] = useState('');
+
   useEffect(() => {
     api.get(`/api/groups/${id}`).then(r => {
       setGroup(r.data);
@@ -44,7 +46,9 @@ export default function GroupPage() {
       const reqIds = (r.data.requests || []).map(m => String(m._id || m));
       if (membIds.includes(me.id)) setJoinStatus('member');
       else if (reqIds.includes(me.id)) setJoinStatus('pending');
-    }).catch(() => navigate('/')).finally(() => setLoading(false));
+    }).catch(e => {
+      setError(e.response?.data?.message || 'Failed to load group');
+    }).finally(() => setLoading(false));
   }, [id]);
 
   const handleJoin = async () => {
@@ -112,6 +116,13 @@ export default function GroupPage() {
     </div>
   );
 
+  if (error) return (
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col items-center justify-center gap-3">
+      <Navbar onMenuToggle={() => {}} />
+      <p className="text-red-400 text-sm">{error}</p>
+      <button onClick={() => navigate(-1)} className="text-zinc-400 hover:text-white text-sm underline">Go back</button>
+    </div>
+  );
   if (!group) return null;
 
   const memberCount = group.members?.length || 0;
