@@ -292,6 +292,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
         loop
         muted={muted}
         playsInline
+        preload="auto"
         onClick={togglePause}
         className="h-full max-w-[400px] w-full object-cover cursor-pointer"
         style={{ maxHeight: '100vh' }}
