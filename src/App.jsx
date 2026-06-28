@@ -35,6 +35,7 @@ import WatchLive from './pages/WatchLive';
 import Redeem from './pages/Redeem';
 import GiftCards from './pages/GiftCards';
 import VeloPlus from './pages/VeloPlus';
+import GroupCreate from './pages/GroupCreate';
 
 
 const PrivateRoute = ({ children }) => {
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/redeem" element={<PrivateRoute><Redeem /></PrivateRoute>} />
         <Route path="/gift-cards" element={<PrivateRoute><GiftCards /></PrivateRoute>} />
         <Route path="/veloplus" element={<PrivateRoute><VeloPlus /></PrivateRoute>} />
+        <Route path="/group/create" element={<PrivateRoute><GroupCreate /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>
