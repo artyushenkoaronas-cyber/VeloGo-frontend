@@ -33,6 +33,7 @@ export default function Channel() {
   const [shorts, setShorts] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [savedStreams, setSavedStreams] = useState([]);
+  const [myGroup, setMyGroup] = useState(null);
   const [editPlaylist, setEditPlaylist] = useState(null); // { _id, title, visibility }
   const [trimShort, setTrimShort] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -57,6 +58,7 @@ export default function Channel() {
       }).catch(() => {});
       api.get('/api/playlists/mine', { headers }).then(r => setPlaylists(r.data)).catch(() => {});
       api.get('/api/lives/mine', { headers }).then(r => setSavedStreams(r.data)).catch(() => {});
+      api.get('/api/groups/mine/list', { headers }).then(r => { if (r.data?.length) setMyGroup(r.data[0]); }).catch(() => {});
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
@@ -305,12 +307,12 @@ export default function Channel() {
                   Go Live
                 </button>
                 {(user.subscribers || 0) >= 100000 && (
-                  <button onClick={() => navigate('/group/create')}
+                  <button onClick={() => navigate(myGroup ? `/group/${myGroup._id}` : '/group/create')}
                     className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-5 py-2 rounded-full text-sm font-medium transition">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Group
+                    {myGroup ? 'My Group' : 'Group'}
                   </button>
                 )}
               </>
