@@ -26,14 +26,29 @@ export default function GroupCreate() {
   const logoRef = useRef(null);
   const bgRef = useRef(null);
 
-  const handleImage = (file, type) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (type === 'logo') { setLogoPreview(e.target.result); setLogo(e.target.result); }
-      else { setBgPreview(e.target.result); setBackground(e.target.result); }
+  const compressImage = (file, maxW, maxH, quality = 0.75) => new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
     };
-    reader.readAsDataURL(file);
+    img.src = url;
+  });
+
+  const handleImage = async (file, type) => {
+    if (!file) return;
+    const maxW = type === 'logo' ? 400 : 1200;
+    const maxH = type === 'logo' ? 400 : 400;
+    const compressed = await compressImage(file, maxW, maxH);
+    if (type === 'logo') { setLogoPreview(compressed); setLogo(compressed); }
+    else { setBgPreview(compressed); setBackground(compressed); }
   };
 
   const handleCreate = async () => {
