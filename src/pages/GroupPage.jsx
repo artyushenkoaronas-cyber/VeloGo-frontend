@@ -226,8 +226,8 @@ export default function GroupPage() {
     } catch (e) { alert('Failed to update background'); }
   };
 
-  const isOwner = group && String(group.owner?._id || group.owner) === me.id;
-  const isMember = group && (group.members || []).map(m => String(m._id || m)).includes(me.id);
+  const isOwner = group && me?.id && String(group.owner?._id || group.owner) === me.id;
+  const isMember = group && me?.id && (group.members || []).map(m => String(m._id || m)).includes(me.id);
 
   const canPost = () => {
     if (!group || !isMember && !isOwner) return false;
@@ -246,10 +246,12 @@ export default function GroupPage() {
     api.get(`/api/groups/${id}`)
       .then(r => {
         setGroup(r.data);
-        const membIds = (r.data.members || []).map(m => String(m._id || m));
-        const reqIds = (r.data.requests || []).map(m => String(m._id || m));
-        if (membIds.includes(me.id)) setJoinStatus('member');
-        else if (reqIds.includes(me.id)) setJoinStatus('pending');
+        if (me?.id) {
+          const membIds = (r.data.members || []).map(m => String(m._id || m));
+          const reqIds = (r.data.requests || []).map(m => String(m._id || m));
+          if (membIds.includes(me.id)) setJoinStatus('member');
+          else if (reqIds.includes(me.id)) setJoinStatus('pending');
+        }
       })
       .catch(e => setError(e.response?.data?.message || 'Failed to load group'))
       .finally(() => setLoading(false));
@@ -266,6 +268,7 @@ export default function GroupPage() {
   }, [tab, id]);
 
   const handleJoin = async () => {
+    if (!me?.id) { navigate('/login'); return; }
     setJoinLoading(true);
     try {
       const { data } = await api.post(`/api/groups/${id}/join`, {}, { headers });
@@ -557,7 +560,7 @@ export default function GroupPage() {
         <div className="w-full h-56 bg-zinc-800 relative overflow-hidden group/banner">
           {group.background
             ? <img src={group.background} className="w-full h-full object-cover" alt="" />
-            : <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />}
+            : <div className="w-full h-full bg-gradient-to-br from-purple-900 via-red-900 to-zinc-900" />}
           {isOwner && (
             <>
               <button onClick={() => bannerEditRef.current?.click()}

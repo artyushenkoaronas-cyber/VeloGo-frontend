@@ -186,7 +186,9 @@ const { username } = useParams();
         <div className="w-full h-56 md:h-72 overflow-hidden bg-zinc-800">
           {(channel?.background || channel?.banner)
             ? <img src={(() => { const s = channel.background || channel.banner; return mediaUrl(s); })()} className="w-full h-full object-cover" />
-            : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
+            : channel?.isFounder
+              ? <div className="w-full h-full rainbow-banner" />
+              : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
         </div>
 
         <div className="max-w-5xl mx-auto px-6">
