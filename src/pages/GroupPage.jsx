@@ -295,7 +295,7 @@ export default function GroupPage() {
   }, [tab, id]);
 
   const handleJoin = async () => {
-    if (!me?.id) { navigate('/login'); return; }
+    if (!me?.id || !token) { navigate('/login'); return; }
     setJoinLoading(true);
     try {
       const { data } = await api.post(`/api/groups/${id}/join`, {}, { headers });
@@ -303,7 +303,11 @@ export default function GroupPage() {
       if (data.status === 'member') {
         setGroup(g => ({ ...g, members: [...(g.members || []), { _id: me.id, name: me.name, username: me.username, avatar: me.avatar }] }));
       }
-    } catch (e) { alert(e.response?.data?.message || 'Error'); }
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 401 || status === 403) { navigate('/login'); return; }
+      alert(e.response?.data?.message || 'Error');
+    }
     setJoinLoading(false);
   };
 
