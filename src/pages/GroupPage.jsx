@@ -31,6 +31,75 @@ function compressImage(file, maxW, maxH, quality = 0.8) {
   });
 }
 
+function JoinEventButton({ evt, groupName }) {
+  const key = `event_joined_${evt._id}`;
+  const [joined, setJoined] = useState(() => !!localStorage.getItem(key));
+
+  const handleJoin = async () => {
+    if (joined) return;
+    // Request notification permission
+    let notifGranted = false;
+    if ('Notification' in window) {
+      const perm = await Notification.requestPermission();
+      notifGranted = perm === 'granted';
+    }
+
+    localStorage.setItem(key, '1');
+    setJoined(true);
+
+    if (notifGranted && evt.date) {
+      const msUntil = new Date(evt.date).getTime() - Date.now();
+      if (msUntil > 0 && msUntil < 7 * 24 * 60 * 60 * 1000) {
+        // Schedule notification (works if page stays open)
+        setTimeout(() => {
+          new Notification(`🎉 ${evt.title} — starting now!`, {
+            body: `${groupName} event is starting!`,
+            icon: '/favicon.ico',
+          });
+        }, msUntil);
+
+        // Also remind 5 minutes before
+        const msRemind = msUntil - 5 * 60 * 1000;
+        if (msRemind > 0) {
+          setTimeout(() => {
+            new Notification(`⏰ ${evt.title} starts in 5 min`, {
+              body: `Get ready for the ${groupName} event!`,
+              icon: '/favicon.ico',
+            });
+          }, msRemind);
+        }
+      }
+    }
+  };
+
+  return (
+    <button onClick={handleJoin}
+      className={`text-xs font-semibold px-4 py-1.5 rounded-full transition flex items-center gap-1.5 ${joined ? 'bg-green-700 text-green-200 cursor-default' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
+      {joined ? (
+        <>
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+          Joined
+        </>
+      ) : 'Join Event'}
+    </button>
+  );
+}
+
+function DescriptionSnippet({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  const short = text.length > 180;
+  return (
+    <div className="text-zinc-300 text-sm leading-relaxed">
+      <span className="whitespace-pre-wrap">{expanded || !short ? text : text.slice(0, 180) + '...'}</span>
+      {short && (
+        <button onClick={() => setExpanded(e => !e)} className="text-blue-400 hover:text-blue-300 ml-1 font-medium">
+          {expanded ? 'less' : 'more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
   if (diff < 60) return 'just now';
@@ -483,12 +552,14 @@ export default function GroupPage() {
               <div className="bg-zinc-800 text-zinc-300 text-xs px-3 py-1.5 rounded-full font-medium">
                 📅 {new Date(group.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} Created
               </div>
-              {posts.length > 0 && (
-                <div className="bg-zinc-800 text-zinc-300 text-xs px-3 py-1.5 rounded-full font-medium">
-                  📝 {posts.length} Posts
-                </div>
-              )}
             </div>
+
+            {/* Description snippet like Roblox */}
+            {group.description && (
+              <div className="pb-5">
+                <DescriptionSnippet text={group.description} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -790,7 +861,7 @@ export default function GroupPage() {
                         {evt.description && <p className="text-zinc-500 text-xs leading-relaxed line-clamp-2">{evt.description}</p>}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <button className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition">Join Event</button>
+                        <JoinEventButton evt={evt} groupName={group.name} />
                         {isOwner && (
                           <button onClick={() => deleteEvent(evt._id)} className="text-zinc-600 hover:text-red-400 transition p-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
