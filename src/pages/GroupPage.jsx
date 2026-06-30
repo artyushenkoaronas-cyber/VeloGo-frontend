@@ -390,6 +390,18 @@ export default function GroupPage() {
     setGroup(g => ({ ...g, events: g.events.filter(e => e._id !== eventId) }));
   };
 
+  const deleteAnnouncement = async (annId) => {
+    if (!confirm('Delete this announcement?')) return;
+    await api.delete(`/api/groups/${id}/announcements/${annId}`, { headers });
+    setGroup(g => ({ ...g, announcements: g.announcements.filter(a => a._id !== annId) }));
+  };
+
+  const deletePost = async (postId) => {
+    if (!confirm('Delete this post?')) return;
+    await api.delete(`/api/groups/${id}/posts/${postId}`, { headers });
+    setPosts(ps => ps.filter(p => p._id !== postId));
+  };
+
   const getMemberRank = (memberId) => {
     if (!group?.ranks) return null;
     for (const rank of group.ranks) {
@@ -747,6 +759,11 @@ export default function GroupPage() {
                           {authorRank && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: authorRank.color, backgroundColor: authorRank.color + '22' }}>{authorRank.name}</span>}
                           <span className="text-zinc-600 text-xs">· {timeAgo(post.createdAt)}</span>
                         </div>
+                        {(isOwner || String(post.author?._id || post.author) === me.id) && (
+                          <button onClick={() => deletePost(post._id)} className="text-zinc-600 hover:text-red-400 transition p-1 flex-shrink-0">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        )}
                       </div>
 
                       {/* Body */}
@@ -903,6 +920,11 @@ export default function GroupPage() {
                             {authorRank && <span className="text-[11px] font-semibold px-2 py-0.5 rounded" style={{ color: authorRank.color, backgroundColor: authorRank.color + '22' }}>{authorRank.name}</span>}
                             <span className="text-zinc-600 text-xs">· {ann.createdAt ? timeAgo(ann.createdAt) : ''}</span>
                           </div>
+                          {isOwner && (
+                            <button onClick={() => deleteAnnouncement(ann._id)} className="text-zinc-600 hover:text-red-400 transition p-1 flex-shrink-0">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                          )}
                         </div>
                         {ann.text && <div className="px-4 pt-3"><p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">{ann.text}</p></div>}
                         {ann.image && <div className="px-4 pt-3"><img src={ann.image} className="w-full rounded-xl object-cover max-h-96" alt="" /></div>}
@@ -1113,24 +1135,66 @@ export default function GroupPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                {(group.ranks || []).map((rank, i) => (
-                  <div key={rank._id} className="flex items-center gap-4 bg-[#1a1a1a] rounded-xl px-4 py-3.5 border border-zinc-800">
-                    <span className="text-zinc-500 text-xs font-mono w-5 text-center">{i + 1}</span>
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: rank.color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm" style={{ color: rank.color }}>{rank.name}</p>
-                      <p className="text-zinc-500 text-xs">{(rank.members || []).length} members</p>
+              <div className="space-y-3">
+                {(group.ranks || []).map((rank, i) => {
+                  const perm = group.postPermission || 'all';
+                  const canPostWall = perm === 'all' || perm === 'members' || perm.split(',').includes(rank._id);
+                  const rankMembers = (group.members || []).filter(m =>
+                    (rank.members || []).map(r => String(r._id || r)).includes(String(m._id || m))
+                  );
+                  return (
+                    <div key={rank._id} className="bg-[#1a1a1a] rounded-xl border border-zinc-800 overflow-hidden">
+                      {/* Rank header */}
+                      <div className="flex items-center gap-3 px-4 py-3.5">
+                        <span className="text-zinc-600 text-xs font-mono w-5 text-center">{i + 1}</span>
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: rank.color }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm" style={{ color: rank.color }}>{rank.name}</p>
+                          <p className="text-zinc-500 text-xs">{rankMembers.length} members</p>
+                        </div>
+                        {isOwner && (
+                          <button onClick={() => deleteRank(rank._id)} className="text-zinc-600 hover:text-red-400 transition p-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Permissions */}
+                      <div className="px-4 pb-3 flex gap-2 flex-wrap border-t border-zinc-800/60 pt-2.5">
+                        <span className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-full font-medium ${canPostWall ? 'bg-green-500/15 text-green-400' : 'bg-zinc-800 text-zinc-600'}`}>
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d={canPostWall ? "M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" : "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"} clipRule="evenodd"/></svg>
+                          Post on Wall
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-full font-medium bg-green-500/15 text-green-400">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                          View group
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-full font-medium bg-green-500/15 text-green-400">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                          Reply to posts
+                        </span>
+                      </div>
+
+                      {/* Members with this rank */}
+                      {rankMembers.length > 0 && (
+                        <div className="px-4 pb-3 border-t border-zinc-800/60 pt-2.5">
+                          <p className="text-zinc-500 text-[11px] mb-2">Members with this rank:</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {rankMembers.slice(0, 10).map(m => (
+                              <div key={String(m._id || m)} className="flex items-center gap-1.5 bg-zinc-800 rounded-full px-2 py-1">
+                                <div className="w-4 h-4 rounded-full bg-zinc-700 overflow-hidden flex-shrink-0">
+                                  {m.avatar && <img src={mediaUrl(m.avatar)} className="w-full h-full object-cover" alt="" />}
+                                </div>
+                                <span className="text-zinc-300 text-[11px]">{m.name || m.username}</span>
+                              </div>
+                            ))}
+                            {rankMembers.length > 10 && <span className="text-zinc-600 text-[11px] self-center">+{rankMembers.length - 10} more</span>}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {isOwner && (
-                      <button onClick={() => deleteRank(rank._id)} className="text-zinc-600 hover:text-red-400 transition p-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
