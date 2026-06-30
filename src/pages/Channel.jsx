@@ -209,7 +209,7 @@ export default function Channel() {
         <div className="w-full h-40 relative overflow-hidden group/banner bg-zinc-800">
           {user.background
             ? <img src={mediaUrl(user.background)} className="w-full h-full object-cover" />
-            : <div className="w-full h-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900" />}
+            : <div className="w-full h-full rainbow-banner" />}
           <button onClick={() => bgRef.current.click()}
             className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-full transition opacity-0 group-hover/banner:opacity-100">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

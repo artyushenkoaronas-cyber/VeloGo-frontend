@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes rainbow-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.rainbow-banner {
+  background: linear-gradient(270deg,
+    #ff0000, #ff4500, #ff8c00, #ffd700,
+    #00c800, #00bfff, #0070ff, #8a2be2,
+    #ff1493, #ff0000);
+  background-size: 400% 400%;
+  animation: rainbow-shift 6s ease infinite;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

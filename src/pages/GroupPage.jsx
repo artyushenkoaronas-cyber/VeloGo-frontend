@@ -376,8 +376,8 @@ export default function GroupPage() {
         {/* Banner */}
         <div className="w-full h-56 bg-zinc-800 relative overflow-hidden">
           {group.background
-            ? <img src={group.background} className="w-full h-full object-contain" alt="" />
-            : <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />}
+            ? <img src={group.background} className="w-full h-full object-cover" alt="" />
+            : <div className="w-full h-full rainbow-banner" />}
         </div>
 
         {/* Profile header */}
