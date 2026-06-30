@@ -1,26 +1,16 @@
 export default function VeloPlusBadge({ size = 18 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      style={{ display: 'inline', flexShrink: 0, verticalAlign: 'middle' }}
-      aria-label="VeloGo Plus subscriber"
-    >
-      {/* Rounded hexagon background */}
-      <path
-        d="M12 2.8 L18.2 6.4 Q19.5 7.1 19.5 8.6 L19.5 15.4 Q19.5 16.9 18.2 17.6 L12 21.2 L5.8 17.6 Q4.5 16.9 4.5 15.4 L4.5 8.6 Q4.5 7.1 5.8 6.4 Z"
-        fill="#e11d48"
-      />
-      {/* Spiral inside - white */}
-      <path
-        d="M15.5 9 A5 5 0 1 1 8 13 A2.8 2.8 0 0 1 13.5 11.5 A1.4 1.4 0 0 1 12 13"
-        stroke="white"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        fill="none"
-      />
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none"
+      style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' }}>
+      <path d="M18 2L32 10V26L18 34L4 26V10L18 2Z" fill="#1a1a2e" stroke="#7c3aed" strokeWidth="1.5"/>
+      <path d="M18 5L29.5 11.5V24.5L18 31L6.5 24.5V11.5L18 5Z" fill="url(#vpGrad)"/>
+      <text x="18" y="23" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="Arial, sans-serif">V+</text>
+      <defs>
+        <linearGradient id="vpGrad" x1="6" y1="5" x2="30" y2="31" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#7c3aed"/>
+          <stop offset="100%" stopColor="#4f46e5"/>
+        </linearGradient>
+      </defs>
     </svg>
   );
 }

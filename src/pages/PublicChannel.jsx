@@ -9,6 +9,7 @@ import VideoCard from '../components/VideoCard';
 import VerifiedBadge from '../components/VerifiedBadge';
 import OfficialArtistBadge from '../components/OfficialArtistBadge';
 import FounderBadge from '../components/FounderBadge';
+import VeloPlusBadge from '../components/VeloPlusBadge';
 
 const tabs = ['Home', 'Videos', 'Shorts', 'Live', 'Playlists', 'Posts'];
 
@@ -201,6 +202,7 @@ const { username } = useParams();
                 <h1 className="text-white text-2xl font-bold">{channel?.name}</h1>
                 {channel?.isOfficialArtist && <OfficialArtistBadge size={22} />}
                 {channel?.isFounder && <FounderBadge size={22} />}
+                {channel?.isVeloPlus && <VeloPlusBadge size={22} />}
               </div>
               <p className="text-gray-400 text-sm">
                 @{channel?.username} · {fv(subCount)} subscribers · {videos.length} videos
