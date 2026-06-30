@@ -169,6 +169,41 @@ export default function GroupPage() {
   // Members filter
   const [memberRankFilter, setMemberRankFilter] = useState('all');
 
+  // Edit group modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editJoinMode, setEditJoinMode] = useState('open');
+  const [editSaving, setEditSaving] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const openEdit = () => {
+    setEditName(group.name);
+    setEditDesc(group.description || '');
+    setEditJoinMode(group.joinMode || 'open');
+    setShowEditModal(true);
+    setShowMenu(false);
+  };
+
+  const saveEdit = async () => {
+    if (!editName.trim()) return;
+    setEditSaving(true);
+    try {
+      await api.patch(`/api/groups/${id}`, { name: editName, description: editDesc, joinMode: editJoinMode }, { headers });
+      setGroup(g => ({ ...g, name: editName, description: editDesc, joinMode: editJoinMode }));
+      setShowEditModal(false);
+    } catch (e) { alert(e.response?.data?.message || 'Error'); }
+    setEditSaving(false);
+  };
+
+  const deleteGroup = async () => {
+    if (!confirm(`Delete "${group.name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/api/groups/${id}`, { headers });
+      navigate('/channel');
+    } catch (e) { alert(e.response?.data?.message || 'Error'); }
+  };
+
   // Image editing
   const logoEditRef = useRef(null);
   const bannerEditRef = useRef(null);
@@ -395,7 +430,7 @@ export default function GroupPage() {
   const memberCount = group.members?.length || 0;
 
   return (
-    <div className="min-h-screen bg-[#111] text-white" onClick={() => setShowReactionPicker(null)}>
+    <div className="min-h-screen bg-[#111] text-white" onClick={() => { setShowReactionPicker(null); setShowMenu(false); }}>
       <Navbar onMenuToggle={() => {}} />
 
       {/* Rank modal */}
@@ -417,6 +452,38 @@ export default function GroupPage() {
               <button onClick={createRank} disabled={rankLoading || !rankName.trim()}
                 className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50">
                 {rankLoading ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit group modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-[#1c1c1c] rounded-2xl p-6 w-full max-w-sm border border-zinc-800">
+            <h2 className="text-white font-semibold text-lg mb-4">Edit Group</h2>
+            <label className="text-zinc-400 text-xs mb-1 block">Group name</label>
+            <input value={editName} onChange={e => setEditName(e.target.value)} maxLength={80}
+              className="w-full bg-zinc-800 text-white px-4 py-2.5 rounded-xl outline-none border border-zinc-700 focus:border-red-500 mb-3" />
+            <label className="text-zinc-400 text-xs mb-1 block">Description</label>
+            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} maxLength={500} rows={3}
+              className="w-full bg-zinc-800 text-white px-4 py-2.5 rounded-xl outline-none border border-zinc-700 focus:border-red-500 resize-none mb-3" />
+            <label className="text-zinc-400 text-xs mb-2 block">Who can join?</label>
+            <div className="flex gap-2 mb-5">
+              {['open', 'request'].map(m => (
+                <button key={m} onClick={() => setEditJoinMode(m)}
+                  className={`flex-1 py-2 rounded-full text-sm font-medium transition ${editJoinMode === m ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>
+                  {m === 'open' ? '🌍 Anyone' : '🔒 Request only'}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowEditModal(false)}
+                className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-full text-sm transition">Cancel</button>
+              <button onClick={saveEdit} disabled={editSaving || !editName.trim()}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50">
+                {editSaving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>
@@ -522,7 +589,7 @@ export default function GroupPage() {
                   {group.owner?.isFounder && <span className="ml-1 inline-flex"><FounderBadge size={14} /></span>}
                 </p>
               </div>
-              <div className="pb-1 flex-shrink-0">
+              <div className="pb-1 flex-shrink-0 flex items-center gap-2">
                 {isOwner ? (
                   <span className="bg-zinc-700 text-zinc-300 px-5 py-2 rounded-full text-sm font-medium">Owner</span>
                 ) : joinStatus === 'member' ? (
@@ -537,6 +604,33 @@ export default function GroupPage() {
                     className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50">
                     {joinLoading ? '...' : group.joinMode === 'open' ? 'Join Group' : 'Request to Join'}
                   </button>
+                )}
+
+                {/* Owner ⋯ menu */}
+                {isOwner && (
+                  <div className="relative">
+                    <button onClick={e => { e.stopPropagation(); setShowMenu(m => !m); }}
+                      className="w-9 h-9 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded-full transition text-zinc-300">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                      </svg>
+                    </button>
+                    {showMenu && (
+                      <div className="absolute right-0 top-11 z-30 bg-[#2a2a2a] border border-zinc-700 rounded-xl shadow-xl py-1 w-44"
+                        onClick={e => e.stopPropagation()}>
+                        <button onClick={openEdit}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-700 transition">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          Edit group
+                        </button>
+                        <button onClick={deleteGroup}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-700 transition">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          Delete group
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
