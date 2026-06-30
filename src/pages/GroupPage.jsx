@@ -478,7 +478,7 @@ export default function GroupPage() {
         <div className="w-full h-56 bg-zinc-800 relative overflow-hidden group/banner">
           {group.background
             ? <img src={group.background} className="w-full h-full object-cover" alt="" />
-            : <div className="w-full h-full rainbow-banner" />}
+            : <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />}
           {isOwner && (
             <>
               <button onClick={() => bannerEditRef.current?.click()}
