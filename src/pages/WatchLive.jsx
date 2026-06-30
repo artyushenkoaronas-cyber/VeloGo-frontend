@@ -123,7 +123,13 @@ export default function WatchLive() {
       console.log('[viewer] addSourceBuffer:', mimeTypeRef.current);
       const sb = msRef.current.addSourceBuffer(mimeTypeRef.current);
       sbRef.current = sb;
-      sb.addEventListener('updateend', () => { drainingRef.current = false; drainQueue(); });
+      sb.addEventListener('updateend', () => {
+        drainingRef.current = false;
+        drainQueue();
+        if (videoRef.current && videoRef.current.paused && videoRef.current.readyState >= 2) {
+          videoRef.current.play().catch(() => {});
+        }
+      });
       drainQueue();
     } catch (e) {
       console.warn('[viewer] addSourceBuffer failed:', e);
@@ -221,7 +227,10 @@ export default function WatchLive() {
         return;
       }
       queueRef.current.push(buf);
-      drainQueue();
+      if (sbRef.current) {
+        drainQueue();
+      }
+      // If SourceBuffer not ready yet, chunks stay in queue and drain when ready
       if (videoRef.current && videoRef.current.paused && videoRef.current.readyState >= 2) {
         videoRef.current.play().catch(() => {});
       }
