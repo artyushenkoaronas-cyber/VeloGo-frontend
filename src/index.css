@@ -17,6 +17,18 @@
   animation: rainbow-shift 6s ease infinite;
 }
 
+.rainbow-text {
+  background: linear-gradient(270deg,
+    #ff0000, #ff6600, #ffcc00,
+    #00cc44, #00aaff, #7c3aed,
+    #ff1493, #ff0000);
+  background-size: 400% 400%;
+  animation: rainbow-shift 4s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

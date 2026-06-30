@@ -753,7 +753,7 @@ export default function GroupPage() {
                           {post.author?.avatar && <img src={mediaUrl(post.author.avatar)} className="w-full h-full object-cover" alt="" />}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                          <span className="text-white text-sm font-semibold">{post.author?.name || 'Unknown'}</span>
+                          <span className={`text-sm font-semibold ${post.author?.isFounder ? 'rainbow-text' : 'text-white'}`}>{post.author?.name || 'Unknown'}</span>
                           {post.author?.isFounder && <FounderBadge size={12} />}
                           {authorIsOwner && <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded">Owner</span>}
                           {authorRank && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: authorRank.color, backgroundColor: authorRank.color + '22' }}>{authorRank.name}</span>}

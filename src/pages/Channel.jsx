@@ -262,7 +262,7 @@ export default function Channel() {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-white text-2xl font-bold">{user.name}</h1>
+                    <h1 className={`text-2xl font-bold ${user.isFounder ? 'rainbow-text' : 'text-white'}`}>{user.name}</h1>
                     {user.isOfficialArtist && <OfficialArtistBadge size={22} />}
                     {user.isFounder && <FounderBadge size={22} />}
                     {user.isVeloPlus && <VeloPlusBadge size={22} />}
