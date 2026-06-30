@@ -378,9 +378,19 @@ export default function GroupPage() {
             <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)} maxLength={500} rows={2} placeholder="Description (optional)"
               className="w-full bg-zinc-800 text-white px-4 py-2.5 rounded-xl outline-none placeholder-zinc-500 mb-3 border border-zinc-700 focus:border-red-500 resize-none" />
             <div className="mb-5">
-              <label className="text-zinc-400 text-xs mb-1.5 block">Date & time</label>
+              <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2 block">
+                <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Date & Time
+              </label>
               <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)}
-                className="w-full bg-zinc-800 text-white px-4 py-2.5 rounded-xl outline-none border border-zinc-700 focus:border-red-500" />
+                className="w-full bg-zinc-700 text-white px-4 py-3 rounded-xl outline-none border-2 border-zinc-600 focus:border-red-500 text-base cursor-pointer"
+                style={{ colorScheme: 'dark' }} />
+              {eventDate && (
+                <p className="text-green-400 text-xs mt-1.5 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                  {new Date(eventDate).toLocaleString('lt-LT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
             </div>
             <div className="flex gap-2">
               <button onClick={() => { setShowEventModal(false); setEventTitle(''); setEventDesc(''); setEventDate(''); setEventImage(''); setEventImagePreview(''); }}
