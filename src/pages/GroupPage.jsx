@@ -100,6 +100,28 @@ export default function GroupPage() {
   // Members filter
   const [memberRankFilter, setMemberRankFilter] = useState('all');
 
+  // Image editing
+  const logoEditRef = useRef(null);
+  const bannerEditRef = useRef(null);
+
+  const handleLogoEdit = async (file) => {
+    if (!file) return;
+    const compressed = await compressImage(file, 400, 400);
+    try {
+      await api.patch(`/api/groups/${id}/images`, { logo: compressed }, { headers });
+      setGroup(g => ({ ...g, logo: compressed }));
+    } catch (e) { alert('Failed to update logo'); }
+  };
+
+  const handleBannerEdit = async (file) => {
+    if (!file) return;
+    const compressed = await compressImage(file, 1400, 500);
+    try {
+      await api.patch(`/api/groups/${id}/images`, { background: compressed }, { headers });
+      setGroup(g => ({ ...g, background: compressed }));
+    } catch (e) { alert('Failed to update background'); }
+  };
+
   const isOwner = group && String(group.owner?._id || group.owner) === me.id;
   const isMember = group && (group.members || []).map(m => String(m._id || m)).includes(me.id);
 
@@ -374,22 +396,43 @@ export default function GroupPage() {
 
       <div className="pt-14">
         {/* Banner */}
-        <div className="w-full h-56 bg-zinc-800 relative overflow-hidden">
+        <div className="w-full h-56 bg-zinc-800 relative overflow-hidden group/banner">
           {group.background
             ? <img src={group.background} className="w-full h-full object-cover" alt="" />
             : <div className="w-full h-full rainbow-banner" />}
+          {isOwner && (
+            <>
+              <button onClick={() => bannerEditRef.current?.click()}
+                className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-full transition opacity-0 group-hover/banner:opacity-100">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                Change background
+              </button>
+              <input ref={bannerEditRef} type="file" accept="image/*" className="hidden"
+                onChange={e => handleBannerEdit(e.target.files[0])} />
+            </>
+          )}
         </div>
 
         {/* Profile header */}
         <div className="bg-[#1a1a1a] border-b border-zinc-800">
           <div className="max-w-5xl mx-auto px-6">
             <div className="flex items-end gap-5 -mt-16 pb-5">
-              <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-[#1a1a1a] flex-shrink-0 bg-zinc-700">
+              <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-[#1a1a1a] flex-shrink-0 bg-zinc-700 relative group/logo">
                 {group.logo
                   ? <img src={group.logo} className="w-full h-full object-cover" alt={group.name} />
                   : <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-700 to-purple-900">
                       <span className="text-white font-black text-4xl">{group.name[0]?.toUpperCase()}</span>
                     </div>}
+                {isOwner && (
+                  <>
+                    <button onClick={() => logoEditRef.current?.click()}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover/logo:opacity-100 transition flex items-center justify-center cursor-pointer">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                    </button>
+                    <input ref={logoEditRef} type="file" accept="image/*" className="hidden"
+                      onChange={e => handleLogoEdit(e.target.files[0])} />
+                  </>
+                )}
               </div>
               <div className="flex-1 min-w-0 pb-1">
                 <h1 className="text-white text-2xl font-bold">{group.name}</h1>
