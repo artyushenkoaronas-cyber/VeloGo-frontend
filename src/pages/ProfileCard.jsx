@@ -158,7 +158,24 @@ export default function ProfileCard() {
         }
       </button>
 
-      <div className="relative z-10 w-full max-w-md mx-auto px-4 flex flex-col gap-4">
+      {/* Animated link banner at top */}
+      <div className="fixed top-0 left-0 right-0 z-20 overflow-hidden py-1.5 bg-black/30 backdrop-blur-sm border-b border-white/5">
+        <div className="flex whitespace-nowrap" style={{ animation: 'marquee 18s linear infinite' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="text-white/40 text-xs font-mono mx-6">
+              velo-go-frontend.vercel.app/u/{username}
+            </span>
+          ))}
+        </div>
+      </div>
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+
+      <div className="relative z-10 w-full max-w-md mx-auto px-4 flex flex-col gap-4 pt-8">
         {/* Profile card */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6">
           <div className="flex items-center gap-4">
