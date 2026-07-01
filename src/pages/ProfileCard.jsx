@@ -158,11 +158,11 @@ export default function ProfileCard() {
         }
       </button>
 
-      {/* Animated link banner at top */}
-      <div className="fixed top-0 left-0 right-0 z-20 overflow-hidden py-1.5 bg-black/30 backdrop-blur-sm border-b border-white/5">
-        <div className="flex whitespace-nowrap" style={{ animation: 'marquee 18s linear infinite' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <span key={i} className="text-white/40 text-xs font-mono mx-6">
+      {/* Subtle marquee link at top */}
+      <div className="fixed top-0 left-0 right-0 z-20 overflow-hidden" style={{ height: '22px' }}>
+        <div className="flex whitespace-nowrap items-center h-full" style={{ animation: 'marquee 25s linear infinite' }}>
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span key={i} style={{ color: 'rgba(255,255,255,0.18)', fontSize: '11px', fontFamily: 'monospace', marginLeft: '48px' }}>
               velo-go-frontend.vercel.app/u/{username}
             </span>
           ))}
