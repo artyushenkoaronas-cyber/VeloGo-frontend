@@ -2,27 +2,35 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
+const STARS = Array.from({ length: 167 }, (_, i) => ({
+  id: i,
+  right: Math.random() * 101,
+  top: Math.random() * 101,
+  fixed: Math.random() > 0.4,
+  size: Math.random() < 0.3 ? 2 : 1,
+}));
+
 function Stars() {
-  const stars = Array.from({ length: 80 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 2 + 1,
-    delay: Math.random() * 4,
-    dur: Math.random() * 3 + 2,
-  }));
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      {stars.map(s => (
-        <div key={s.id} className="absolute rounded-full bg-white"
+    <>
+      {STARS.map(s => (
+        <div key={s.id}
           style={{
-            left: `${s.x}%`, top: `${s.y}%`,
-            width: s.size, height: s.size,
-            opacity: 0,
-            animation: `twinkle ${s.dur}s ${s.delay}s infinite`,
+            color: 'rgb(255,255,255)',
+            position: s.fixed ? 'fixed' : 'absolute',
+            transform: 'translateX(0deg) translateY(0deg)',
+            verticalAlign: 'baseline',
+            right: `${s.right}%`,
+            top: 'auto',
+            width: s.size,
+            height: s.size,
+            borderRadius: '50%',
+            backgroundColor: 'white',
+            pointerEvents: 'none',
+            zIndex: 0,
           }} />
       ))}
-    </div>
+    </>
   );
 }
 
@@ -139,13 +147,6 @@ export default function ProfileCard() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
-      <style>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.3); }
-        }
-      `}</style>
-
       <Stars />
 
       {/* Volume icon top left */}
@@ -241,7 +242,7 @@ export default function ProfileCard() {
         {/* Music player */}
         {user.profileSong && (
           <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-4">
-            <audio ref={audioRef} src={user.profileSong} />
+            <audio ref={audioRef} src={user.profileSong} loop />
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 3v10.55A4 4 0 107 17V7h8V3H9z"/></svg>
