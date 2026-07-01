@@ -28,7 +28,7 @@ export default function Channel() {
   const [activeTab, setActiveTab] = useState('Home');
   const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem('velogo_user') || '{}'); } catch { return {}; } });
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: user.name || '', username: user.username || '', bio: user.bio || '' });
+  const [form, setForm] = useState({ name: user.name || '', username: user.username || '', bio: user.bio || '', website: user.website || '' });
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState([]);
   const [shorts, setShorts] = useState([]);
@@ -63,7 +63,7 @@ export default function Channel() {
       const token = localStorage.getItem('velogo_token');
       api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => {
-          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, isFounder: r.data.isFounder, isVeloPlus: r.data.isVeloPlus, avatar: r.data.avatar || user.avatar, createdAt: r.data.createdAt || user.createdAt, bio: r.data.bio || user.bio };
+          const updated = { ...user, subscribers: r.data.subscribers, isVerified: r.data.isVerified, isOfficialArtist: r.data.isOfficialArtist, isFounder: r.data.isFounder, isVeloPlus: r.data.isVeloPlus, avatar: r.data.avatar || user.avatar, createdAt: r.data.createdAt || user.createdAt, bio: r.data.bio || user.bio, website: r.data.website || '' };
           setUser(updated);
           localStorage.setItem('velogo_user', JSON.stringify(updated));
         }).catch(() => {});
@@ -260,6 +260,9 @@ export default function Channel() {
                   <input value={form.bio} onChange={e => setForm(p => ({ ...p, bio: e.target.value }))}
                     placeholder="Channel description"
                     className="bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 w-full max-w-sm" />
+                  <input value={form.website || ''} onChange={e => setForm(p => ({ ...p, website: e.target.value }))}
+                    placeholder="Website URL (https://...)"
+                    className="bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 w-full max-w-sm" />
                 </div>
               ) : (
                 <>
@@ -310,6 +313,14 @@ export default function Channel() {
                   <span className="w-2 h-2 rounded-full bg-white animate-pulse inline-block" />
                   Go Live
                 </button>
+                {user.website && (
+                  <a href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-5 py-2 rounded-full text-sm font-medium transition">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    Website
+                  </a>
+                )}
                 {(user.subscribers || 0) >= 100000 && (
                   <button onClick={() => navigate(myGroup ? `/group/${myGroup._id}` : '/group/create')}
                     className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-5 py-2 rounded-full text-sm font-medium transition">
