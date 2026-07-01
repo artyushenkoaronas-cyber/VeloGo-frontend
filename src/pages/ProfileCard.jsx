@@ -81,7 +81,7 @@ export default function ProfileCard() {
   };
 
   const socials = Object.entries(user?.socialLinks || {}).filter(([, v]) => v);
-  const joinDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: "'%y" }) : '';
+  const joinDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '';
 
   if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-6 h-6 border border-white/20 border-t-white rounded-full animate-spin" /></div>;
 
