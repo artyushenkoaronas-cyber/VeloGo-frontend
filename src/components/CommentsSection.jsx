@@ -7,6 +7,15 @@ import OfficialArtistBadge from './OfficialArtistBadge';
 import FounderBadge from './FounderBadge';
 import VeloPlusBadge from './VeloPlusBadge';
 
+async function uploadCommentImage(file, videoId, token) {
+  const form = new FormData();
+  form.append('image', file);
+  const r = await api.post(`/api/videos/${videoId}/comments/upload-image`, form, {
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+  });
+  return r.data.imageUrl;
+}
+
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
   if (s < 60) return 'just now';
@@ -22,6 +31,9 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const [sending, setSending] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null); // { file, previewUrl }
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef(null);
   const [pinnedId, setPinnedId] = useState(initialPinned || null);
   const inputRef = useRef(null);
   const token = localStorage.getItem('velogo_token');
@@ -41,16 +53,33 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
     } catch {}
   };
 
+  const handleImagePick = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingImage({ file, previewUrl: URL.createObjectURL(file) });
+    setFocused(true);
+  };
+
   const handleSend = async (parentId = null, replyText = null) => {
     const body = replyText ?? text;
     if (!token) return navigate('/login');
-    if (!body.trim()) return;
+    if (!body.trim() && !pendingImage) return;
 
-    // Optimistic update â€” show immediately
+    let imageUrl = null;
+    if (pendingImage && !parentId) {
+      setUploadingImage(true);
+      try {
+        imageUrl = await uploadCommentImage(pendingImage.file, videoId, token);
+      } catch { setUploadingImage(false); return; }
+      setUploadingImage(false);
+    }
+
+    // Optimistic update
     const tempId = `temp-${Date.now()}`;
     const optimistic = {
       _id: tempId,
       text: body,
+      imageUrl,
       parentId: parentId || null,
       author: { _id: me.id, name: me.name, username: me.username, avatar: me.avatar, isVerified: me.isVerified },
       likes: [],
@@ -58,12 +87,12 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
       _optimistic: true
     };
     setComments(prev => parentId ? [...prev, optimistic] : [optimistic, ...prev]);
-    if (!parentId) { setText(''); setFocused(false); }
+    if (!parentId) { setText(''); setFocused(false); setPendingImage(null); }
 
     try {
       const { data } = await api.post(
         `/api/videos/${videoId}/comments`,
-        { text: body, parentId },
+        { text: body, parentId, imageUrl },
         { headers }
       );
       setComments(prev => prev.map(c => c._id === tempId ? data : c));
@@ -141,16 +170,44 @@ export default function CommentsSection({ videoId, uploaderId, pinnedCommentId: 
             placeholder="Add a comment..."
             className="w-full bg-transparent border-b border-zinc-700 focus:border-white text-white text-sm py-2 focus:outline-none transition"
           />
+          {/* Image preview */}
+          {pendingImage && (
+            <div className="relative inline-block mt-2">
+              <img src={pendingImage.previewUrl} alt="" className="max-h-32 rounded-lg object-cover" />
+              <button
+                onClick={() => setPendingImage(null)}
+                className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white hover:bg-black transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
           {focused && (
-            <div className="flex justify-end gap-2 mt-2">
-              <button onClick={() => { setFocused(false); setText(''); }}
-                className="px-4 py-2 text-white text-sm rounded-full hover:bg-zinc-800 transition">
-                Cancel
-              </button>
-              <button onClick={() => handleSend()} disabled={!text.trim() || sending}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-full transition">
-                {sending ? 'Sending...' : 'Comment'}
-              </button>
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-2">
+                <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImagePick} />
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  className="text-gray-400 hover:text-white transition p-1 rounded"
+                  title="Add image"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { setFocused(false); setText(''); setPendingImage(null); }}
+                  className="px-4 py-2 text-white text-sm rounded-full hover:bg-zinc-800 transition">
+                  Cancel
+                </button>
+                <button onClick={() => handleSend()} disabled={(!text.trim() && !pendingImage) || sending || uploadingImage}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-full transition">
+                  {uploadingImage ? 'Uploading...' : sending ? 'Sending...' : 'Comment'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -260,7 +317,12 @@ function CommentRow({ comment: c, isPinned, isOwner, uploaderId, me, headers, to
           )}
           <span className="text-gray-500 text-xs">{timeAgo(c.createdAt)}</span>
         </div>
-        <p className="text-gray-200 text-sm leading-relaxed">{c.text}</p>
+        {c.text && <p className="text-gray-200 text-sm leading-relaxed">{c.text}</p>}
+        {c.imageUrl && (
+          <a href={c.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1">
+            <img src={c.imageUrl} alt="" className="max-h-48 max-w-xs rounded-xl object-cover hover:opacity-90 transition" />
+          </a>
+        )}
 
         {/* Actions row */}
         <div className="flex items-center gap-3 mt-2">
