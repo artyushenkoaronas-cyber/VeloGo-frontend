@@ -39,6 +39,7 @@ import GroupCreate from './pages/GroupCreate';
 import GroupPage from './pages/GroupPage';
 import Groups from './pages/Groups';
 import ProfileCard from './pages/ProfileCard';
+import VeloTok from './pages/VeloTok';
 
 
 const PrivateRoute = ({ children }) => {
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="/redeem" element={<PrivateRoute><Redeem /></PrivateRoute>} />
         <Route path="/gift-cards" element={<PrivateRoute><GiftCards /></PrivateRoute>} />
         <Route path="/veloplus" element={<PrivateRoute><VeloPlus /></PrivateRoute>} />
+        <Route path="/velotok" element={<VeloTok />} />
         <Route path="/groups" element={<Groups />} />
         <Route path="/u/:username" element={<ProfileCard />} />
         <Route path="/group/create" element={<PrivateRoute><GroupCreate /></PrivateRoute>} />
