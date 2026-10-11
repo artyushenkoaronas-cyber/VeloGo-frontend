@@ -108,16 +108,29 @@ export default function Shorts() {
         </svg>
       </button>
 
-      {shorts.map((short, i) => (
-        <ShortItem
-          key={short._id}
-          short={short}
-          isActive={i === current}
-          token={token}
-          me={me}
-          navigate={navigate}
-        />
-      ))}
+      {shorts.map((short, i) => {
+        // Only render 2 above and 2 below current — rest are placeholders
+        if (Math.abs(i - current) > 2) {
+          return (
+            <div
+              key={short._id}
+              className="flex-shrink-0 bg-black"
+              style={{ height: '100vh', minHeight: '100vh', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+            />
+          );
+        }
+        return (
+          <ShortItem
+            key={short._id}
+            short={short}
+            isActive={i === current}
+            isNear={Math.abs(i - current) <= 1}
+            token={token}
+            me={me}
+            navigate={navigate}
+          />
+        );
+      })}
 
       {uploadOpen && (
         <UploadModal
@@ -186,11 +199,10 @@ function CommentRow({ c, token, me, shortId }) {
   );
 }
 
-function ShortItem({ short, isActive, token, me, navigate }) {
+function ShortItem({ short, isActive, isNear, token, me, navigate }) {
   const videoRef = useRef(null);
   const [liked, setLiked] = useState(short.likes?.includes(me.id));
   const [likes, setLikes] = useState(short.likes?.length || 0);
-  const [loopCount, setLoopCount] = useState(0);
   const [muted, setMuted] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
@@ -233,20 +245,25 @@ function ShortItem({ short, isActive, token, me, navigate }) {
     const el = videoRef.current;
     if (!el) return;
     const onEnded = () => {
-      setLoopCount(p => p + 1);
       el.currentTime = trimStart;
       el.play().catch(() => {});
     };
-    const onTime = () => {
-      if (trimEnd !== null && el.currentTime >= trimEnd) {
-        setLoopCount(p => p + 1);
-        el.currentTime = trimStart;
-        el.play().catch(() => {});
-      }
-    };
+    // Only add timeupdate if there's a trimEnd — avoids 60fps state updates when not needed
+    let onTime = null;
+    if (trimEnd !== null) {
+      onTime = () => {
+        if (el.currentTime >= trimEnd) {
+          el.currentTime = trimStart;
+          el.play().catch(() => {});
+        }
+      };
+      el.addEventListener('timeupdate', onTime);
+    }
     el.addEventListener('ended', onEnded);
-    el.addEventListener('timeupdate', onTime);
-    return () => { el.removeEventListener('ended', onEnded); el.removeEventListener('timeupdate', onTime); };
+    return () => {
+      el.removeEventListener('ended', onEnded);
+      if (onTime) el.removeEventListener('timeupdate', onTime);
+    };
   }, [trimStart, trimEnd]);
 
   const handleLike = async () => {
@@ -292,7 +309,7 @@ function ShortItem({ short, isActive, token, me, navigate }) {
         loop
         muted={muted}
         playsInline
-        preload="auto"
+        preload={isNear ? 'auto' : 'metadata'}
         onClick={togglePause}
         className="h-full max-w-[400px] w-full object-cover cursor-pointer"
         style={{ maxHeight: '100vh' }}
